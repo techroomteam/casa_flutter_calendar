@@ -67,12 +67,15 @@ class CalendarViewHelper {
     return startTime.hour * timeIntervalHeight;
   }
 
+  // static double convertDroppedOffsetToDateTime() {}
+
   static double getAppointmentPositionAtTimeSlotFromOffset(
       Offset offset, double scrollOffset, double extraHeight) {
     return (offset.dy + scrollOffset - extraHeight);
   }
 
-  /// Covert DragDrop Offset to Time
+  /// Convert Dropped Offset to Time
+  // /// This method is helpful when we place an appoitment on [TimeSlotView]
   static double getAppointmentTimeFromTimeSlot(
       Offset offset, double scrollOffset, double timeIntervalHeight) {
     return (offset.dy + scrollOffset) / timeIntervalHeight;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class CalendarAppointment {
-  DateTime startTime;
+  DateTime? startTime;
 
-  DateTime endTime;
+  DateTime? endTime;
 
   /// Defaults to ` ` represents empty string.
   String subject;
@@ -17,12 +17,12 @@ class CalendarAppointment {
   /// Holds the parent appointment details
   Object? data;
 
-  RRect appointmentRect;
+  RRect? appointmentRect;
 
   CalendarAppointment({
-    required this.startTime,
-    required this.endTime,
-    required this.appointmentRect,
+    this.startTime,
+    this.endTime,
+    this.appointmentRect,
     this.subject = '',
     this.color = Colors.lightBlue,
     this.id,

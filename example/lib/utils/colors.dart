@@ -7,7 +7,7 @@ const gradientcolor = LinearGradient(colors: [
   Color(0xff129700),
 ]);
 
-Color blackAccent1 = const Color(0xff3C4549);
+const blackAccent1 = Color(0xff3C4549);
 const Color blackAccent2 = Color(0xff757A8A);
 Color blackAccent3 = const Color(0xffD2D5DF);
 Color shadowColor = const Color(0xff101E73);
@@ -18,7 +18,7 @@ Color gradient1 = const Color(0xff000000);
 Color backgroundAccentColor = const Color(0xffF4F6FA);
 
 // appointment view colors
-Color appointmentBGColor = const Color(0xffF2F3F8);
+const appointmentBGColor = Color(0xffF2F3F8);
 
 /// appoinment amount baground color
 Color appAmountColor = const Color(0xffFFBE18);

@@ -8,7 +8,8 @@ class AppointmentView extends StatelessWidget {
   final Job jobInfo;
   final double height;
   final double padding;
-  final bool inDisabledArea;
+  final Color color;
+  final Color textColor;
   final void Function()? onTap;
   final void Function()? onLongPress;
 
@@ -16,7 +17,8 @@ class AppointmentView extends StatelessWidget {
     required this.jobInfo,
     this.height = 80.0,
     this.padding = 2.0,
-    this.inDisabledArea = false,
+    this.color = appointmentBGColor,
+    this.textColor = blackAccent1,
     this.onTap,
     this.onLongPress,
     Key? key,
@@ -39,9 +41,7 @@ class AppointmentView extends StatelessWidget {
           padding: const EdgeInsets.only(left: 10, top: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: inDisabledArea
-                ? appointmentBGColor.withOpacity(0.4)
-                : appointmentBGColor,
+            color: color,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,7 +68,7 @@ class AppointmentView extends StatelessWidget {
                           jobInfo.id ?? '',
                           style: bodyText3.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: blackAccent1,
+                            color: textColor,
                           ),
                         ),
                         // const Spacer(),
@@ -114,6 +114,9 @@ class AppointmentView extends StatelessWidget {
                                 ),
                               ),
                             ),
+
+                            // Sized Box...
+                            const SizedBox(width: 8),
                           ],
                         ),
                         // const SizedBox(width: 12),
@@ -124,14 +127,14 @@ class AppointmentView extends StatelessWidget {
                     jobInfo.description ?? '',
                     style: bodyText2.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: blackAccent1,
+                      color: textColor,
                     ),
                   ),
                   Text(
                     jobInfo.unitAddress ?? '',
                     style: bodyText3.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: blackAccent2,
+                      color: textColor,
                     ),
                   )
                 ],

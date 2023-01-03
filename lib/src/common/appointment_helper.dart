@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'calendar_view_helper.dart';
 
 class AppointmentHelper {
-  static List<CalendarAppointment> appointmentsList = <CalendarAppointment>[];
+  // static List<CalendarAppointment> appointmentsList = <CalendarAppointment>[];
 
-  /// Generates the calendar appointments from the given data source
-  static void initAppointmentList(
-    dataSource,
-  ) {
-    AppointmentHelper.appointmentsList =
-        AppointmentHelper.generateCalendarAppointments(dataSource);
-  }
+  // /// Generates the calendar appointments from the given data source
+  // static void initAppointmentList(
+  //   dataSource,
+  // ) {
+  //   AppointmentHelper.appointmentsList =
+  //       AppointmentHelper.generateCalendarAppointments(dataSource);
+  // }
 
   static List<CalendarAppointment> generateCalendarAppointments(
       CalendarDataSource<Object?> calendarData) {
@@ -80,8 +80,8 @@ class AppointmentHelper {
       startTime = dataSource.getStartTime(index);
       endTime = dataSource.getEndTime(index);
     } else {
-      startTime = appointment!.startTime;
-      endTime = appointment.endTime;
+      startTime = appointment!.startTime!;
+      endTime = appointment.endTime!;
     }
 
     int timeDifferenceInHours = endTime.hour - startTime.hour;
@@ -123,15 +123,16 @@ class AppointmentHelper {
       // debugPrint("appointmentView.id: ${appointmentView.id}");
       // debugPrint("dropedAppointment.id: ${dropedAppointment.id}");
       // #2: If [appointmentView] is equal to [dropedAppointment] ignore it
-      if (appointmentView.id != dropedAppointment.id) {
+      if (appointmentView.id != dropedAppointment.id &&
+          appointmentView.appointmentRect != null) {
         // debugPrint("Index: $i");
         // debugPrint(
         //     "AppointmentOnPoint RRect: ${appointmentView.appointmentRect}");
 
-        if ((appointmentTop >= appointmentView.appointmentRect.top &&
-                appointmentTop <= appointmentView.appointmentRect.bottom) ||
-            (appointmentBottom >= appointmentView.appointmentRect.top &&
-                appointmentBottom <= appointmentView.appointmentRect.bottom)) {
+        if ((appointmentTop >= appointmentView.appointmentRect!.top &&
+                appointmentTop <= appointmentView.appointmentRect!.bottom) ||
+            (appointmentBottom >= appointmentView.appointmentRect!.top &&
+                appointmentBottom <= appointmentView.appointmentRect!.bottom)) {
           selectedAppointmentView = appointmentView;
           break;
         }
@@ -139,62 +140,5 @@ class AppointmentHelper {
     }
 
     return selectedAppointmentView;
-  }
-
-  ///
-  static void onAcceptWithDetail(
-    DragTargetDetails<CalendarAppointment> details,
-    // double scrollOffset,
-    void Function(Function() fn) setState,
-  ) {
-    debugPrint("onAcceptWithDetails: $details");
-    double scrollOffset = scrollController.offset;
-    double dropOffset =
-        CalendarViewHelper.getAppointmentPositionAtTimeSlotFromOffset(
-      details.offset,
-      scrollOffset,
-      totalExtraHeight,
-    );
-    debugPrint("Exect dropOffset: $dropOffset");
-
-    int indexOfDroppedAppointment = appointmentsList.indexOf(details.data);
-
-    if (indexOfDroppedAppointment == -1) {
-      // value is not in list
-      appointmentsList.add(details.data);
-      setState(() {});
-    } else {
-      var appoinment = AppointmentHelper.getCalendarAppointmentOnPoint(
-        details.offset.dy + scrollOffset,
-        details.data,
-        AppointmentHelper.appointmentsList,
-      );
-
-      // if appointment is null then we're good to update the appointment list
-      // else we can't place appointment on another appointment
-      if (appoinment == null) {
-        updateCalendarAppointmentList(details.data, dropOffset);
-        setState(() {});
-      } else {
-        debugPrint('Placing apointment on: ${appoinment.toString()}');
-      }
-    }
-  }
-
-  /// After [onAcceptWithDetails] if appointment is not placed on another then we need to update Calendar Appointment list
-  static void updateCalendarAppointmentList(
-      CalendarAppointment appointment, double dropOffset) {
-    int index = AppointmentHelper.appointmentsList.indexOf(appointment);
-
-    // get job duration from it's start date and end date
-    final jobDurationInHour = AppointmentHelper.getAppoinmentDurationInInt(
-        appointment: appointment, index);
-    // debugPrint(
-    //     "updateCalendarAppointmentList jobDurationInHour: $jobDurationInHour");
-    double timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
-    double appRectBottom = dropOffset + timeIntervalHeight * jobDurationInHour;
-
-    AppointmentHelper.appointmentsList[index].appointmentRect =
-        RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
   }
 }

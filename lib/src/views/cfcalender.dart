@@ -13,16 +13,23 @@ import 'package:intl/intl.dart' show DateFormat;
 class CfCalendar extends StatefulWidget {
   final CalendarDataSource<Object?> dataSource;
 
+  /// This appointment will be stacked into calendar view
+  final CalendarAppointment appointment;
+  // final CalendarAppointment selectedAppointment;
+
   final DateTime activeDate;
 
   /// appointmentObject is object from [dataSource.appointments]
-  final Widget Function(BuildContext, dynamic appointmentObject, Key? key)?
+  final Widget Function(
+          BuildContext, CalendarAppointment appointmentObject, Key? key)?
       appointmentBuilder;
   final void Function(DateTime)? onViewChanged;
   final TimeSlotViewSettings timeSlotViewSetting;
   final DaysHeaderViewSetting daysHeaderViewSetting;
   const CfCalendar({
     required this.dataSource,
+    required this.appointment,
+    // required this.selectedAppointment,
     required this.activeDate,
     this.appointmentBuilder,
     this.timeSlotViewSetting = const TimeSlotViewSettings(),
@@ -38,21 +45,37 @@ class CfCalendar extends StatefulWidget {
 class _CfCalendarState extends State<CfCalendar> {
   // final GlobalKey _draggableKey = GlobalKey();
   final _listViewKey = GlobalKey();
+  // scroll controller
+  final scrollController = ScrollController();
+
+  /// This list hold list of widgets created with help of
   List<Widget> appointmentsWidgetList = [];
   bool _isDragging = false;
+
+  //
+  List<CalendarAppointment> appointmentsList = [];
+  late CalendarAppointment selectedAppointment = widget.appointment;
 
   @override
   void initState() {
     // update [totalExtraHeight] value in constant file
     double headerHeight = widget.daysHeaderViewSetting.headerHeight;
     double extraHeight = widget.daysHeaderViewSetting.extraHeight;
+
+    debugPrint("headerHeight: $headerHeight");
+    debugPrint("extraHeight: $extraHeight");
     totalExtraHeight = headerHeight + extraHeight;
     // update [timeSlotViewSettings] in constant file
     timeSlotViewSettings = widget.timeSlotViewSetting;
     //
-    AppointmentHelper.initAppointmentList(widget.dataSource);
+    initAppointmentList(widget.dataSource);
 
     super.initState();
+  }
+
+  void initAppointmentList(dataSource) {
+    appointmentsList =
+        AppointmentHelper.generateCalendarAppointments(dataSource);
   }
 
   @override
@@ -66,75 +89,101 @@ class _CfCalendarState extends State<CfCalendar> {
     appointmentsWidgetList = getListOfAppointmentWidgets();
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        child: Column(
-          // physics: const NeverScrollableScrollPhysics(),
-          // shrinkWrap: true,
-          children: [
-            CalendarDaysListView(
-              daysHeaderViewSetting: widget.daysHeaderViewSetting,
-              onNewSelection: widget.onViewChanged,
-              activeDate: widget.activeDate,
-            ),
+      body: Stack(
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height,
+            child: Column(
+              // physics: const NeverScrollableScrollPhysics(),
+              // shrinkWrap: true,
+              children: [
+                CalendarDaysListView(
+                  daysHeaderViewSetting: widget.daysHeaderViewSetting,
+                  onNewSelection: widget.onViewChanged,
+                  activeDate: widget.activeDate,
+                ),
 
-            // const SizedBox(height: 24),
-            // TimeSlot and TimeRuler View
-            Expanded(
-              child: _createListener(
-                Scrollbar(
-                  controller: scrollController,
-                  child: ListView(
-                    shrinkWrap: true,
-                    key: _listViewKey,
-                    controller: scrollController,
-                    physics: const ClampingScrollPhysics(),
-                    padding: EdgeInsets.zero,
-                    // physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      Row(
+                // const SizedBox(height: 24),
+                // TimeSlot and TimeRuler View
+                Expanded(
+                  child: _createListener(
+                    Scrollbar(
+                      controller: scrollController,
+                      child: ListView(
+                        shrinkWrap: true,
+                        key: _listViewKey,
+                        controller: scrollController,
+                        physics: const ClampingScrollPhysics(),
+                        padding: EdgeInsets.zero,
+                        // physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          Expanded(
-                            flex: 1,
-                            child: TimeRulerView(
-                              timeSlotViewSetting: widget.timeSlotViewSetting,
-                            ),
-                          ),
-                          Expanded(
-                            flex: 6,
-                            child: Stack(
-                              children: [
-                                DragTarget<CalendarAppointment>(
-                                  builder:
-                                      (context, candidateData, rejectedData) {
-                                    return TimeSlotView(
-                                      timeSlotViewSetting:
-                                          widget.timeSlotViewSetting,
-                                    );
-                                  },
-                                  onAcceptWithDetails: (details) =>
-                                      AppointmentHelper.onAcceptWithDetail(
-                                    details,
-                                    // scrollController.offset,
-                                    setState,
-                                  ),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: TimeRulerView(
+                                  timeSlotViewSetting:
+                                      widget.timeSlotViewSetting,
                                 ),
-                                for (int i = 0;
-                                    i < appointmentsWidgetList.length;
-                                    i++)
-                                  appointmentsWidgetList[i]
-                              ],
-                            ),
+                              ),
+                              Expanded(
+                                flex: 6,
+                                child: Stack(
+                                  children: [
+                                    DragTarget<CalendarAppointment>(
+                                      builder: (context, candidateData,
+                                          rejectedData) {
+                                        return TimeSlotView(
+                                          timeSlotViewSetting:
+                                              widget.timeSlotViewSetting,
+                                        );
+                                      },
+                                      onAcceptWithDetails: (details) =>
+                                          onAcceptWithDetail(
+                                              details, scrollController.offset),
+                                    ),
+                                    for (int i = 0;
+                                        i < appointmentsWidgetList.length;
+                                        i++)
+                                      appointmentsWidgetList[i]
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
+              ],
+            ),
+          ),
+
+          //
+          //selected job
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: LongPressDraggable<CalendarAppointment>(
+              data: widget.appointment,
+              feedback: Material(
+                child: widget.appointmentBuilder!(
+                  context,
+                  widget.appointment,
+                  // AppointmentHelper.appointmentsList[i],
+                  null,
+                ),
+              ),
+              childWhenDragging: const SizedBox.shrink(),
+              child: UnScheduleJobView(
+                unscheduleAppointmentObject: widget.appointment,
+                appointmentBuilder: widget.appointmentBuilder!,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -144,10 +193,12 @@ class _CfCalendarState extends State<CfCalendar> {
   List<Widget> getListOfAppointmentWidgets() {
     List<Widget> childrens = [];
 
-    for (int i = 0; i < AppointmentHelper.appointmentsList.length; i++) {
-      final appointment = AppointmentHelper.appointmentsList[i];
+    for (int i = 0; i < appointmentsList.length; i++) {
+      final appointment = appointmentsList[i];
 
-      final appointmentTime = appointment.startTime;
+      /// startTime or endTime values could be null after draging unsceduled appointment on the DragTarget
+      /// we should assigned those values according to dragged position
+      final appointmentTime = appointment.startTime!;
       // remove hours, minutes or seconds from DateTime for easy comparision
       final appTimeToDate = DateTime(
           appointmentTime.year, appointmentTime.month, appointmentTime.day);
@@ -157,7 +208,7 @@ class _CfCalendarState extends State<CfCalendar> {
       if (appTimeToDate.compareTo(activeDateToDate) == 0) {
         childrens.add(
           Positioned(
-            top: appointment.appointmentRect.top,
+            top: appointment.appointmentRect!.top,
             left: 0,
             right: 0,
             child: widget.appointmentBuilder != null
@@ -171,7 +222,8 @@ class _CfCalendarState extends State<CfCalendar> {
                     feedback: Material(
                       child: widget.appointmentBuilder!(
                         context,
-                        widget.dataSource.appointments[i],
+                        // widget.dataSource.appointments[i],
+                        appointmentsList[i],
                         // AppointmentHelper.appointmentsList[i],
                         null,
                       ),
@@ -179,7 +231,8 @@ class _CfCalendarState extends State<CfCalendar> {
                     childWhenDragging: const SizedBox.shrink(),
                     child: widget.appointmentBuilder!(
                       context,
-                      widget.dataSource.appointments[i],
+                      // widget.dataSource.appointments[i],
+                      appointmentsList[i],
                       // AppointmentHelper.appointmentsList[i],
                       null,
                     ),
@@ -234,6 +287,87 @@ class _CfCalendarState extends State<CfCalendar> {
         }
       },
     );
+  }
+
+  ///
+  void onAcceptWithDetail(
+      DragTargetDetails<CalendarAppointment> details, double scrollOffset) {
+    debugPrint("onAcceptWithDetails: $details");
+
+    double dropOffset =
+        CalendarViewHelper.getAppointmentPositionAtTimeSlotFromOffset(
+      details.offset,
+      scrollOffset,
+      totalExtraHeight,
+    );
+    debugPrint("Exact dropOffset: $dropOffset");
+
+    int indexOfDroppedAppointment = appointmentsList.indexOf(details.data);
+
+    if (indexOfDroppedAppointment == -1) {
+      //#1: First check if dropped appoinment is unscheduled
+      var droppedAppointment = details.data;
+
+      if (droppedAppointment.startTime == null) {
+        final height =
+            totalExtraHeight + timeSlotViewSettings.timeIntervalHeight;
+        debugPrint("totalExtraHeight: $totalExtraHeight");
+        debugPrint("Height: $height");
+        // If this condition is true that means droppedAppointment is unscheduled
+        double droppedTime = (dropOffset + scrollOffset) /
+            timeSlotViewSettings.timeIntervalHeight;
+
+        //#2: Convert droppedTime to DateTime
+        // DateTime droppedStartTime = CalendarViewHelper
+
+        debugPrint("DroppedTime: $droppedTime");
+      }
+
+      var activeDate = widget.activeDate;
+      droppedAppointment = droppedAppointment.copyWith(
+        startTime:
+            DateTime(activeDate.year, activeDate.month, activeDate.day, 1),
+        endTime: DateTime(activeDate.year, activeDate.month, activeDate.day, 3),
+      );
+      // value is not in list
+      appointmentsList.add(droppedAppointment);
+
+      _updateCalendarAppointmentList(droppedAppointment, dropOffset);
+      setState(() {});
+    } else {
+      var appoinment = AppointmentHelper.getCalendarAppointmentOnPoint(
+        details.offset.dy + scrollOffset,
+        details.data,
+        appointmentsList,
+      );
+
+      // if appointment is null then we're good to update the appointment list
+      // else we can't place appointment on another appointment
+      if (appoinment == null) {
+        _updateCalendarAppointmentList(details.data, dropOffset);
+        setState(() {});
+      } else {
+        debugPrint('Placing apointment on: ${appoinment.toString()}');
+      }
+    }
+  }
+
+  /// After [onAcceptWithDetails] if appointment is not placed on another then we need to update Calendar Appointment list
+  void _updateCalendarAppointmentList(
+      CalendarAppointment appointment, double dropOffset) {
+    int index = appointmentsList.indexOf(appointment);
+
+    // get job duration from it's start date and end date
+    final jobDurationInHour = AppointmentHelper.getAppoinmentDurationInInt(
+        index,
+        appointment: appointment);
+    // debugPrint(
+    //     "updateCalendarAppointmentList jobDurationInHour: $jobDurationInHour");
+    double timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
+    double appRectBottom = dropOffset + timeIntervalHeight * jobDurationInHour;
+
+    appointmentsList[index].appointmentRect =
+        RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
   }
 }
 
@@ -322,5 +456,70 @@ class TimeSlotView extends StatelessWidget {
     }
 
     return Column(children: children);
+  }
+}
+
+//
+class UnScheduleJobView extends StatelessWidget {
+  final CalendarAppointment unscheduleAppointmentObject;
+  final Widget Function(BuildContext, CalendarAppointment, Key?)
+      appointmentBuilder;
+  const UnScheduleJobView({
+    required this.unscheduleAppointmentObject,
+    required this.appointmentBuilder,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 1), // changes position of shadow
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('To Accept job drag it to desired time first '),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // GridView
+              SizedBox(
+                width: 16,
+                height: 50,
+                child: GridView.builder(
+                  itemCount: 6,
+                  padding: EdgeInsets.zero,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 5.6,
+                    crossAxisSpacing: 4.2,
+                  ),
+                  itemBuilder: (context, index) => Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+              // appointment view
+              appointmentBuilder(context, unscheduleAppointmentObject, null),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
   }
 }
