@@ -44,16 +44,16 @@ class _CasaFlutterCalendarExampleState
     extends State<CasaFlutterCalendarExample> {
   DateTime activeDate = now;
   late AvailabilityTime selectedJobAvailability;
-  late DateTime availableStartTime;
-  late DateTime availableEndTime;
+  DateTime? availableStartTime;
+  DateTime? availableEndTime;
   // selected job
   final unscheduleJob = Job(
     id: 'Ticket 900',
     description: 'Washing machine not starting',
     startTime: now,
-    availablityList: [
+    availabilityList: [
       const AvailabilityTime(
-        days: ['Fri'],
+        days: ['Mon'],
         dayAvailability: DayAvailability.morning,
         fromTime: CasaTimeOfDay(hour: 7, minute: 0),
         toTime: CasaTimeOfDay(hour: 12, minute: 0),
@@ -69,7 +69,7 @@ class _CasaFlutterCalendarExampleState
   //
   late CalendarAppointment unScheduleAppointment =
       createAppointment(unscheduleJob);
-  late CalendarAppointment selectedAppointment = unScheduleAppointment;
+  // late CalendarAppointment selectedAppointment = unScheduleAppointment;
   // already scheduled job list
   final myScheduleJobsListProvider = [
     Job(
@@ -77,7 +77,7 @@ class _CasaFlutterCalendarExampleState
       description: 'Washing machine not starting',
       numberOfHours: 2,
       startTime: DateTime(now.year, now.month, now.day, 5),
-      availablityList: const [
+      availabilityList: const [
         AvailabilityTime(
           days: ['Fri'],
           dayAvailability: DayAvailability.morning,
@@ -85,7 +85,7 @@ class _CasaFlutterCalendarExampleState
           toTime: CasaTimeOfDay(hour: 7, minute: 0),
         ),
         AvailabilityTime(
-          days: ['Mon', 'Thu'],
+          days: ['Wed', 'Thu'],
           dayAvailability: DayAvailability.noon,
           fromTime: CasaTimeOfDay(hour: 0, minute: 0),
           toTime: CasaTimeOfDay(hour: 12, minute: 0),
@@ -97,7 +97,7 @@ class _CasaFlutterCalendarExampleState
       description: 'Washing machine not starting',
       numberOfHours: 3,
       startTime: DateTime(now.year, now.month, now.day, 13),
-      availablityList: const [
+      availabilityList: const [
         AvailabilityTime(
           days: ['Fri'],
           dayAvailability: DayAvailability.morning,
@@ -151,23 +151,37 @@ class _CasaFlutterCalendarExampleState
               extraHeight: extraHeight,
             ),
             dataSource: MeetingDataSource(_getDataSource()),
-            appointment: unScheduleAppointment,
+            unScheduleAppointment: unScheduleAppointment,
             activeDate: activeDate,
             onViewChanged: (newDate) {
               activeDate = newDate;
               setState(() {});
             },
-            appointmentBuilder: (context, appointment, key) {
+            appointmentBuilder:
+                (context, appointment, selectedAppointment, key) {
               Job job = appointment.data as Job;
 
-              bool isSelectedJob = selectedAppointment == appointment;
-              return AppointmentView(
+              debugPrint("selectedAppointment: ${selectedAppointment.id}");
+              debugPrint("appointment: ${appointment.id}");
+
+              bool isSelectedJob = selectedAppointment.id == appointment.id;
+              debugPrint("isSelectedJob: $isSelectedJob");
+              return
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     selectedAppointment = appointment;
+                  //     // debugPrint("On appointment Tap");
+                  //     setState(() {});
+                  //   },
+                  //   child:
+                  AppointmentView(
                 key: key,
                 height:
                     isSelectedJob ? 80 : timeIntervalHeight * job.numberOfHours,
                 jobInfo: job,
                 color: isSelectedJob ? primaryColor : appBackgroundColor,
                 textColor: isSelectedJob ? Colors.white : blackAccent1,
+                // ),
               );
             },
           ),
@@ -182,7 +196,7 @@ class _CasaFlutterCalendarExampleState
 
     debugPrint('selectedDay: $selectedDay');
 
-    for (var availability in unscheduleJob.availablityList!) {
+    for (var availability in unscheduleJob.availabilityList!) {
       if (availability.days.contains(selectedDay)) {
         selectedJobAvailability = availability;
         availableStartTime = DateTime(

@@ -1,11 +1,8 @@
-import 'package:example/model/job.dart';
-import 'package:example/utils/colors.dart';
-import 'package:example/utils/constants.dart';
-import 'package:example/utils/styles.dart';
+import 'package:casa_flutter_calendar/src/common/style.dart';
 import 'package:flutter/material.dart';
 
 class AppointmentView extends StatelessWidget {
-  final Job jobInfo;
+  final jobInfo;
   final double height;
   final double padding;
   final Color color;
@@ -59,7 +56,7 @@ class AppointmentView extends StatelessWidget {
                     children: [
                       Text(
                         jobInfo.id ?? '',
-                        style: bodyText3.copyWith(
+                        style: CfCalendarStyle.bodyText3.copyWith(
                           fontWeight: FontWeight.w600,
                           color: textColor,
                         ),
@@ -76,12 +73,11 @@ class AppointmentView extends StatelessWidget {
                                 horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
                               color: blackAccent3,
-                              borderRadius:
-                                  BorderRadius.circular(borderRadius7),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               '7am-12pm',
-                              style: bodyText5.copyWith(
+                              style: CfCalendarStyle.bodyText5.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: blackAccent1,
                                 fontSize: 10,
@@ -95,12 +91,11 @@ class AppointmentView extends StatelessWidget {
                                 horizontal: 6, vertical: 2.5),
                             decoration: BoxDecoration(
                               color: appAmountColor,
-                              borderRadius:
-                                  BorderRadius.circular(borderRadius7),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               '\$1400',
-                              style: bodyText5.copyWith(
+                              style: CfCalendarStyle.bodyText5.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: blackAccent1,
                                 fontSize: 10.0,
@@ -118,14 +113,14 @@ class AppointmentView extends StatelessWidget {
                 ),
                 Text(
                   jobInfo.description ?? '',
-                  style: bodyText2.copyWith(
+                  style: CfCalendarStyle.bodyText2.copyWith(
                     fontWeight: FontWeight.w600,
                     color: textColor,
                   ),
                 ),
                 Text(
                   jobInfo.unitAddress ?? '',
-                  style: bodyText3.copyWith(
+                  style: CfCalendarStyle.bodyText3.copyWith(
                     fontWeight: FontWeight.w500,
                     color: textColor,
                   ),

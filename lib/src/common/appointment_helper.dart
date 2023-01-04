@@ -20,10 +20,10 @@ class AppointmentHelper {
       CalendarDataSource<Object?> calendarData) {
     final calendarAppointmentCollection = <CalendarAppointment>[];
 
-    final List<dynamic> dataSource = calendarData.appointments;
+    final List<dynamic> appointments = calendarData.appointments;
 
-    for (int i = 0; i < dataSource.length; i++) {
-      final dynamic item = dataSource[i];
+    for (int i = 0; i < appointments.length; i++) {
+      final dynamic item = appointments[i];
       final CalendarAppointment app = createAppointment(item, calendarData);
 
       calendarAppointmentCollection.add(app);
@@ -63,9 +63,8 @@ class AppointmentHelper {
       color: calendarData.getColor(index),
       id: calendarData.getId(index),
       appointmentRect: appointmentRect,
+      data: appointmentObject,
     );
-
-    app.data = appointmentObject;
 
     return app;
   }
@@ -87,6 +86,18 @@ class AppointmentHelper {
     int timeDifferenceInHours = endTime.hour - startTime.hour;
 
     return timeDifferenceInHours;
+  }
+
+  static int getAppoinmentDurationInHour(CalendarAppointment appointment) {
+    DateTime? startTime = appointment.startTime;
+
+    if (startTime == null) {
+      return 2;
+    } else {
+      DateTime endTime = appointment.endTime!;
+      int timeDifferenceInHours = endTime.hour - startTime.hour;
+      return timeDifferenceInHours;
+    }
   }
 
   ///

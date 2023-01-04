@@ -7,7 +7,7 @@ class Job {
   final int numberOfHours;
   final DateTime startTime;
   // availablity list of renter, freelancer need to choose time from this list
-  final List<AvailabilityTime>? availablityList;
+  final List<AvailabilityTime>? availabilityList;
 
   const Job({
     this.id,
@@ -15,7 +15,7 @@ class Job {
     this.unitAddress,
     required this.startTime,
     this.numberOfHours = 3,
-    required this.availablityList,
+    required this.availabilityList,
   });
 
   Job copyWith({
@@ -32,7 +32,7 @@ class Job {
       description: description ?? this.description,
       unitAddress: unitAddress ?? this.unitAddress,
       numberOfHours: numberOfHours ?? this.numberOfHours,
-      availablityList: availablityList ?? this.availablityList,
+      availabilityList: availablityList ?? this.availabilityList,
     );
   }
 }

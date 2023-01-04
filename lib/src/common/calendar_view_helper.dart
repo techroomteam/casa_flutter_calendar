@@ -85,9 +85,14 @@ class CalendarViewHelper {
   static bool isTimeSlotInAvailableArea(DateTime dateTime) {
     var availableStartHour = timeSlotViewSettings.availableStartTime;
     var availableEndHour = timeSlotViewSettings.availableEndTime;
+
+    // debugPrint("dateTime: $dateTime");
     if (availableStartHour == null || availableEndHour == null) {
+      // debugPrint("availableStartHour: $availableStartHour");
+      // debugPrint("availableEndHour: $availableEndHour");
       return true;
-    } else if (dateTime.isAfter(availableStartHour) &&
+    } else if ((dateTime.isAtSameMomentAs(availableStartHour) ||
+            dateTime.isAfter(availableStartHour)) &&
         dateTime.isBefore(availableEndHour)) {
       return true;
     } else {
