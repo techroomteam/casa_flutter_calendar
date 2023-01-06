@@ -101,6 +101,27 @@ class AppointmentHelper {
   }
 
   ///
+  static DateTime convertOffsetToDateTime(
+    double offset,
+
+    /// this field will is required, so full date can be returned with specific day
+    DateTime dateTime,
+  ) {
+    final timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
+    final timeIntervalInMinutes = timeSlotViewSettings.timeInterval.inMinutes;
+    debugPrint("timeIntervalInMinutes: $timeIntervalInMinutes");
+    Duration duration = Duration(
+      minutes: ((offset / timeIntervalHeight) * timeIntervalInMinutes).toInt(),
+    );
+
+    //#TODO: 2: Convert droppedTime to DateTime
+    var date = duration.toString().split(":");
+    var hrs = int.parse(date[0]);
+    var mns = int.parse(date[1]);
+    return DateTime(dateTime.year, dateTime.month, dateTime.day, hrs, mns);
+  }
+
+  ///
   static double getTotalExtraHeightFromTap(
       double headerHeight, double extraHeight) {
     double totalExtraHeight = headerHeight + extraHeight;

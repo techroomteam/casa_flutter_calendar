@@ -1,13 +1,12 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 class TimeSlotViewSettings {
   final double startHour;
   final double endHour;
-  final DateTime? availableStartTime;
-  final DateTime? availableEndTime;
+  final TimeOfDay? availableStartTime;
+  final TimeOfDay? availableEndTime;
+  // final DateTime? availableStartTime;
+  // final DateTime? availableEndTime;
   final String timeFormat;
   final Duration timeInterval;
   final double timeIntervalHeight;
@@ -27,8 +26,8 @@ class TimeSlotViewSettings {
   TimeSlotViewSettings copyWith({
     double? startHour,
     double? endHour,
-    DateTime? availableStartTime,
-    DateTime? availableEndTime,
+    TimeOfDay? availableStartTime,
+    TimeOfDay? availableEndTime,
     String? timeFormat,
     Duration? timeInterval,
     double? timeIntervalHeight,

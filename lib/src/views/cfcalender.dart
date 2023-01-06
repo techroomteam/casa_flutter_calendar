@@ -59,6 +59,7 @@ class _CfCalendarState extends State<CfCalendar> {
   List<CalendarAppointment> appointmentsList = [];
   late CalendarAppointment selectedAppointment = widget.unScheduleAppointment;
   CalendarAppointment? unScheduleAppointment;
+  late DateTime activeDate = widget.activeDate;
 
   @override
   void initState() {
@@ -66,8 +67,8 @@ class _CfCalendarState extends State<CfCalendar> {
     double headerHeight = widget.daysHeaderViewSetting.headerHeight;
     double extraHeight = widget.daysHeaderViewSetting.extraHeight;
 
-    debugPrint("headerHeight: $headerHeight");
-    debugPrint("extraHeight: $extraHeight");
+    // debugPrint("headerHeight: $headerHeight");
+    // debugPrint("extraHeight: $extraHeight");
     totalExtraHeight = headerHeight + extraHeight;
     // update [timeSlotViewSettings] in constant file
     timeSlotViewSettings = widget.timeSlotViewSetting;
@@ -94,6 +95,7 @@ class _CfCalendarState extends State<CfCalendar> {
   @override
   Widget build(BuildContext context) {
     appointmentsWidgetList = getListOfAppointmentWidgets();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -106,8 +108,26 @@ class _CfCalendarState extends State<CfCalendar> {
               children: [
                 CalendarDaysListView(
                   daysHeaderViewSetting: widget.daysHeaderViewSetting,
-                  onNewSelection: widget.onViewChanged,
-                  activeDate: widget.activeDate,
+                  // onNewSelection: widget.onViewChanged,
+                  onNewSelection: (newDate) {
+                    // #1: Update activeDate value
+                    activeDate = newDate;
+                    // #2: if unschedule appointment has been placed on previous date, then move it back to bottom stacked position
+                    if (unScheduleAppointment == null) {
+                      int index = appointmentsList.indexWhere((element) =>
+                          element.id == widget.unScheduleAppointment.id);
+
+                      debugPrint("IndexInList: $index");
+
+                      appointmentsList.removeAt(index);
+
+                      //
+                      unScheduleAppointment = widget.unScheduleAppointment;
+                    }
+                    setState(() {});
+                  },
+
+                  activeDate: activeDate,
                 ),
 
                 // const SizedBox(height: 24),
@@ -186,16 +206,20 @@ class _CfCalendarState extends State<CfCalendar> {
                     child: const CasaButton(text: 'Accept'),
                   )
                 : LongPressDraggable<CalendarAppointment>(
+                    // axis: Axis.vertical,
                     data: widget.unScheduleAppointment,
                     feedback: Material(
-                        child: appointmentBuilder(unScheduleAppointment!)),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width / 1.16,
+                        child: appointmentBuilder(unScheduleAppointment!),
+                      ),
+                    ),
                     childWhenDragging: const SizedBox.shrink(),
                     child: UnScheduleJobView(
                       unscheduleAppointmentObject: unScheduleAppointment,
                       selectedAppointment: selectedAppointment,
-                      // appointmentBuilder: widget.appointmentBuilder!,
                       appointmentBuilder: (_, app, __, ___) =>
-                          appointmentBuilder(app),
+                          appointmentBuilder(app, customHeight: 80),
                     ),
                   ),
           ),
@@ -204,7 +228,8 @@ class _CfCalendarState extends State<CfCalendar> {
     );
   }
 
-  Widget appointmentBuilder(CalendarAppointment appointment) {
+  Widget appointmentBuilder(CalendarAppointment appointment,
+      {double? customHeight}) {
     bool isSelectedJob = selectedAppointment.id == appointment.id;
     final numberOfHours =
         AppointmentHelper.getAppoinmentDurationInHour(appointment);
@@ -214,14 +239,13 @@ class _CfCalendarState extends State<CfCalendar> {
         // #1: Change [selectedAppointment] data
         selectedAppointment = appointment;
         // #2: Change availablity slots
-        checkAvailability(appointment.data);
+        updateAvailabilityAccordingToSelectedAppointment(appointment.data);
         // debugPrint("On appointment Tap");
         setState(() {});
       },
       child: AppointmentView(
-        height: appointment.id == widget.unScheduleAppointment.id
-            ? 80
-            : timeSlotViewSettings.timeIntervalHeight * numberOfHours,
+        height: customHeight ??
+            timeSlotViewSettings.timeIntervalHeight * numberOfHours,
         jobInfo: appointment.data,
         color: isSelectedJob ? selectedAppointmentColor : appBackgroundColor,
         textColor: isSelectedJob ? Colors.white : blackAccent1,
@@ -245,14 +269,20 @@ class _CfCalendarState extends State<CfCalendar> {
     for (int i = 0; i < appointmentsList.length; i++) {
       final appointment = appointmentsList[i];
 
+      debugPrint("appointment: ${appointment.toString()}");
+
       /// startTime or endTime values could be null after draging unsceduled appointment on the DragTarget
       /// we should assigned those values according to dragged position
+      debugPrint("Index Loop: $i");
       final appointmentTime = appointment.startTime!;
       // remove hours, minutes or seconds from DateTime for easy comparision
       final appTimeToDate = DateTime(
           appointmentTime.year, appointmentTime.month, appointmentTime.day);
-      final activeDateToDate = DateTime(widget.activeDate.year,
-          widget.activeDate.month, widget.activeDate.day);
+      final activeDateToDate =
+          DateTime(activeDate.year, activeDate.month, activeDate.day);
+
+      // debugPrint("appTimeToDate: $appTimeToDate");
+      // debugPrint("activeDateToDate: $activeDateToDate");
 
       if (appTimeToDate.compareTo(activeDateToDate) == 0) {
         childrens.add(
@@ -282,8 +312,8 @@ class _CfCalendarState extends State<CfCalendar> {
   }
 
   /// This method will get renter availablity of particular day from Ticket Availablity object
-  void checkAvailability(dynamic appointment) {
-    String selectedDay = widget.activeDate.weekdayName()!;
+  void updateAvailabilityAccordingToSelectedAppointment(dynamic appointment) {
+    String selectedDay = activeDate.weekdayName()!;
     debugPrint('selectedDay: $selectedDay');
 
     dynamic appointmentObject = appointment;
@@ -292,22 +322,22 @@ class _CfCalendarState extends State<CfCalendar> {
 
     for (var availability in appointmentObject.availabilityList) {
       if (availability.days.contains(selectedDay)) {
-        debugPrint("availability: ${availability.days}");
-        debugPrint("availability from: ${availability.fromTime}");
-        var availableStartTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          availability.fromTime!.hour,
-          availability.fromTime!.minute,
-        );
-        var availableEndTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          availability.toTime!.hour,
-          availability.toTime!.minute,
-        );
+        // debugPrint("availability: ${availability.days}");
+        // debugPrint("availability from: ${availability.fromTime}");
+        // var availableStartTime = TimeOf(
+        //   activeDate.year,
+        //   activeDate.month,
+        //   activeDate.day,
+        //   availability.fromTime!.hour,
+        //   availability.fromTime!.minute,
+        // );
+        // var availableEndTime = DateTime(
+        //   activeDate.year,
+        //   activeDate.month,
+        //   activeDate.day,
+        //   availability.toTime!.hour,
+        //   availability.toTime!.minute,
+        // );
 
         // debugPrint("availableStartTime: $availableStartTime");
         // debugPrint("availableEndTime: $availableEndTime");
@@ -315,8 +345,8 @@ class _CfCalendarState extends State<CfCalendar> {
         // Update the dates in timeSlotViewSettings
 
         timeSlotViewSettings = timeSlotViewSettings.copyWith(
-          availableStartTime: availableStartTime,
-          availableEndTime: availableEndTime,
+          availableStartTime: availability.fromTime,
+          availableEndTime: availability.toTime,
         );
 
         isAvailable = true;
@@ -383,39 +413,14 @@ class _CfCalendarState extends State<CfCalendar> {
 
     int indexOfDroppedAppointment = appointmentsList.indexOf(details.data);
 
+    //#1: First check if dropped appoinment is unscheduled
     if (indexOfDroppedAppointment == -1) {
-      //#1: First check if dropped appoinment is unscheduled
       var droppedAppointment = details.data;
 
-      //
-      if (droppedAppointment.startTime == null) {
-        final height =
-            totalExtraHeight + timeSlotViewSettings.timeIntervalHeight;
-        debugPrint("totalExtraHeight: $totalExtraHeight");
-        debugPrint("Height: $height");
-        // If this condition is true that means droppedAppointment is unscheduled
-        double droppedTime = (dropOffset + scrollOffset) /
-            timeSlotViewSettings.timeIntervalHeight;
-
-        //#TODO: 2: Convert droppedTime to DateTime
-
-        debugPrint("DroppedTime: $droppedTime");
-      }
-
-      var activeDate = widget.activeDate;
-
-      //#TODO: Update Hours value
-      droppedAppointment = droppedAppointment.copyWith(
-        startTime:
-            DateTime(activeDate.year, activeDate.month, activeDate.day, 1),
-        endTime: DateTime(activeDate.year, activeDate.month, activeDate.day, 3),
-      );
-      // value is not in list
+      // First add droppedAppointment to the list because it's needed in _updateCalendarAppointmentList
       appointmentsList.add(droppedAppointment);
-
-      unScheduleAppointment = null;
-
       _updateCalendarAppointmentList(droppedAppointment, dropOffset);
+      unScheduleAppointment = null;
       setState(() {});
     } else {
       var appoinment = AppointmentHelper.getCalendarAppointmentOnPoint(
@@ -439,18 +444,53 @@ class _CfCalendarState extends State<CfCalendar> {
   void _updateCalendarAppointmentList(
       CalendarAppointment appointment, double dropOffset) {
     int index = appointmentsList.indexOf(appointment);
+    debugPrint("DroppedIndex: $index");
 
-    // get job duration from it's start date and end date
-    final jobDurationInHour = AppointmentHelper.getAppoinmentDurationInInt(
-        index,
-        appointment: appointment);
-    // debugPrint(
-    //     "updateCalendarAppointmentList jobDurationInHour: $jobDurationInHour");
-    double timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
-    double appRectBottom = dropOffset + timeIntervalHeight * jobDurationInHour;
+    // #1: Update datetime value according to new positioned value
+    DateTime droppedStartTime =
+        AppointmentHelper.convertOffsetToDateTime(dropOffset, activeDate);
+    debugPrint("DroppedTime: $droppedStartTime");
 
-    appointmentsList[index].appointmentRect =
-        RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
+    // #2: Make sure dropped time is not in unavailable area
+
+    bool isAreaAvailable =
+        CalendarViewHelper.isTimeSlotInAvailableArea(droppedStartTime);
+    debugPrint("isAreaAvailable: $isAreaAvailable");
+
+    if (isAreaAvailable) {
+      // var droppedAppointment = appointment;
+      dynamic appointmentData = appointment.data;
+      int appointmentDuration = appointmentData.numberOfHours;
+      appointmentsList[index] = appointmentsList[index].copyWith(
+          startTime: droppedStartTime,
+          endTime: droppedStartTime.add(Duration(hours: appointmentDuration)));
+
+      // appointmentsList[index].startTime = droppedStartTime;
+      // appointmentsList[index].endTime =
+      //     droppedStartTime.add(Duration(hours: appointmentDuration));
+
+      // // #2: get job duration from it's start date and end date
+      // final jobDurationInHour = AppointmentHelper.getAppoinmentDurationInInt(
+      //     index,
+      //     appointment: appointment);
+
+      // #3: Update appointment RRect value
+      double timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
+      double appRectBottom =
+          dropOffset + timeIntervalHeight * appointmentDuration;
+
+      final rRect = RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
+      // // update RRect value in droppedAppointment
+      // droppedAppointment = droppedAppointment.copyWith(rRect: rRect);
+
+      appointmentsList[index].appointmentRect = rRect;
+
+      debugPrint(
+          "appointmentsList[index]: ${appointmentsList[index].toString()}");
+
+      // // after modifying dropped appointment we're returning it, in case if updated value is needed
+      //  droppedAppointment;
+    }
   }
 }
 

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:casa_flutter_calendar/casa_flutter_calendar.dart';
 import 'package:example/enum/date_extension.dart';
 import 'package:example/model/job.dart';
@@ -115,13 +113,6 @@ class _CasaFlutterCalendarExampleState
   ];
 
   @override
-  void initState() {
-    checkAvailability();
-
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final appBar = AppBar(
       backgroundColor: Colors.white,
@@ -141,11 +132,8 @@ class _CasaFlutterCalendarExampleState
       body: Stack(
         children: [
           CfCalendar(
-            timeSlotViewSetting: TimeSlotViewSettings(
-              timeIntervalHeight: timeIntervalHeight,
-              availableStartTime: availableStartTime,
-              availableEndTime: availableEndTime,
-            ),
+            timeSlotViewSetting:
+                TimeSlotViewSettings(timeIntervalHeight: timeIntervalHeight),
             daysHeaderViewSetting: DaysHeaderViewSetting(
               // activeDaysList: ['Tue', 'Thu', 'Fri', 'Mon'],
               extraHeight: extraHeight,
@@ -153,10 +141,10 @@ class _CasaFlutterCalendarExampleState
             dataSource: MeetingDataSource(_getDataSource()),
             unScheduleAppointment: unScheduleAppointment,
             activeDate: activeDate,
-            onViewChanged: (newDate) {
-              activeDate = newDate;
-              setState(() {});
-            },
+            // onViewChanged: (newDate) {
+            //   activeDate = newDate;
+            //   setState(() {});
+            // },
             appointmentBuilder:
                 (context, appointment, selectedAppointment, key) {
               Job job = appointment.data as Job;

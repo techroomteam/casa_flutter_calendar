@@ -28,7 +28,7 @@ class AppointmentView extends StatelessWidget {
       padding: EdgeInsets.all(padding),
       child: Container(
         height: height,
-        padding: const EdgeInsets.only(left: 10, top: 14),
+        padding: const EdgeInsets.only(left: 10, top: 14, right: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           color: color,
@@ -66,7 +66,7 @@ class AppointmentView extends StatelessWidget {
                       // const SizedBox(width: 140),
                       // Time Container...
                       Row(
-                        mainAxisSize: MainAxisSize.min,
+                        // mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -111,6 +111,7 @@ class AppointmentView extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 8.0),
                 Text(
                   jobInfo.description ?? '',
                   style: CfCalendarStyle.bodyText2.copyWith(
