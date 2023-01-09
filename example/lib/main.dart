@@ -45,10 +45,10 @@ class _CasaFlutterCalendarExampleState
   DateTime? availableStartTime;
   DateTime? availableEndTime;
   // selected job
-  final unscheduleJob = Job(
+  final unscheduleJob = const Job(
     id: 'Ticket 900',
     description: 'Washing machine not starting',
-    startTime: now,
+    numberOfHours: 4,
     availabilityList: [
       const AvailabilityTime(
         days: ['Mon'],
@@ -74,17 +74,17 @@ class _CasaFlutterCalendarExampleState
       id: 'Ticket 786',
       description: 'Washing machine not starting',
       numberOfHours: 2,
-      startTime: DateTime(now.year, now.month, now.day, 5),
+      startTime: DateTime(now.year, now.month, now.day, 13),
       availabilityList: const [
         AvailabilityTime(
-          days: ['Fri'],
-          dayAvailability: DayAvailability.morning,
+          days: ['Mon'],
+          dayAvailability: DayAvailability.noon,
           fromTime: CasaTimeOfDay(hour: 12, minute: 0),
-          toTime: CasaTimeOfDay(hour: 7, minute: 0),
+          toTime: CasaTimeOfDay(hour: 20, minute: 0),
         ),
         AvailabilityTime(
           days: ['Wed', 'Thu'],
-          dayAvailability: DayAvailability.noon,
+          dayAvailability: DayAvailability.morning,
           fromTime: CasaTimeOfDay(hour: 0, minute: 0),
           toTime: CasaTimeOfDay(hour: 12, minute: 0),
         ),
@@ -94,7 +94,7 @@ class _CasaFlutterCalendarExampleState
       id: 'Ticket 800',
       description: 'Washing machine not starting',
       numberOfHours: 3,
-      startTime: DateTime(now.year, now.month, now.day, 13),
+      startTime: DateTime(now.year, now.month, now.day + 2, 17),
       availabilityList: const [
         AvailabilityTime(
           days: ['Fri'],
@@ -103,10 +103,10 @@ class _CasaFlutterCalendarExampleState
           toTime: CasaTimeOfDay(hour: 24, minute: 0),
         ),
         AvailabilityTime(
-          days: ['Mon', 'Thu'],
+          days: ['Wed', 'Thu'],
           dayAvailability: DayAvailability.noon,
           fromTime: CasaTimeOfDay(hour: 12, minute: 0),
-          toTime: CasaTimeOfDay(hour: 24, minute: 0),
+          toTime: CasaTimeOfDay(hour: 23, minute: 0),
         ),
       ],
     ),
@@ -124,89 +124,35 @@ class _CasaFlutterCalendarExampleState
     var appBarHeight = appBar.preferredSize.height;
     var extraHeight = statusBarHeight + appBarHeight;
 
-    debugPrint(
-        'statusBarHeight: $statusBarHeight, appBarHeight: $appBarHeight');
-
     return Scaffold(
       appBar: appBar,
-      body: Stack(
-        children: [
-          CfCalendar(
-            timeSlotViewSetting:
-                TimeSlotViewSettings(timeIntervalHeight: timeIntervalHeight),
-            daysHeaderViewSetting: DaysHeaderViewSetting(
-              // activeDaysList: ['Tue', 'Thu', 'Fri', 'Mon'],
-              extraHeight: extraHeight,
-            ),
-            dataSource: MeetingDataSource(_getDataSource()),
-            unScheduleAppointment: unScheduleAppointment,
-            activeDate: activeDate,
-            // onViewChanged: (newDate) {
-            //   activeDate = newDate;
-            //   setState(() {});
-            // },
-            appointmentBuilder:
-                (context, appointment, selectedAppointment, key) {
-              Job job = appointment.data as Job;
-
-              debugPrint("selectedAppointment: ${selectedAppointment.id}");
-              debugPrint("appointment: ${appointment.id}");
-
-              bool isSelectedJob = selectedAppointment.id == appointment.id;
-              debugPrint("isSelectedJob: $isSelectedJob");
-              return
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     selectedAppointment = appointment;
-                  //     // debugPrint("On appointment Tap");
-                  //     setState(() {});
-                  //   },
-                  //   child:
-                  AppointmentView(
-                key: key,
-                height:
-                    isSelectedJob ? 80 : timeIntervalHeight * job.numberOfHours,
-                jobInfo: job,
-                color: isSelectedJob ? primaryColor : appBackgroundColor,
-                textColor: isSelectedJob ? Colors.white : blackAccent1,
-                // ),
-              );
-            },
-          ),
-        ],
+      body: CfCalendar(
+        timeSlotViewSetting:
+            TimeSlotViewSettings(timeIntervalHeight: timeIntervalHeight),
+        daysHeaderViewSetting: DaysHeaderViewSetting(extraHeight: extraHeight),
+        dataSource: MeetingDataSource(_getDataSource()),
+        unScheduleAppointment: unScheduleAppointment,
+        activeDate: activeDate,
+        //   appointmentBuilder:
+        //       (context, appointment, selectedAppointment, key) {
+        //     Job job = appointment.data as Job;
+        //     debugPrint("selectedAppointment: ${selectedAppointment.id}");
+        //     debugPrint("appointment: ${appointment.id}");
+        //     bool isSelectedJob = selectedAppointment.id == appointment.id;
+        //     debugPrint("isSelectedJob: $isSelectedJob");
+        //     return AppointmentView(
+        //       key: key,
+        //       height:
+        //           isSelectedJob ? 80 : timeIntervalHeight * job.numberOfHours,
+        //       jobInfo: job,
+        //       color: isSelectedJob ? primaryColor : appBackgroundColor,
+        //       textColor: isSelectedJob ? Colors.white : blackAccent1,
+        //     );
+        //   },
+        // ),
+        // ],
       ),
     );
-  }
-
-  /// This method will get renter availablity of particular day from Ticket Availablity object
-  void checkAvailability() {
-    String selectedDay = activeDate.weekdayName()!;
-
-    debugPrint('selectedDay: $selectedDay');
-
-    for (var availability in unscheduleJob.availabilityList!) {
-      if (availability.days.contains(selectedDay)) {
-        selectedJobAvailability = availability;
-        availableStartTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          availability.fromTime!.hour,
-          availability.fromTime!.minute,
-        );
-        availableEndTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          availability.toTime!.hour,
-          availability.toTime!.minute,
-        );
-        setState(() {});
-        break;
-      } else {
-        debugPrint("Not Found");
-      }
-    }
   }
 
   List<Job> _getDataSource() {
@@ -255,14 +201,18 @@ class MeetingDataSource extends CalendarDataSource {
 
   @override
   DateTime getStartTime(int index) {
-    return _getMeetingData(index).startTime;
+    return _getMeetingData(index).startTime ?? now;
   }
 
   @override
   DateTime getEndTime(int index) {
     final date = _getMeetingData(index).startTime;
-    final numOfHour = _getMeetingData(index).numberOfHours;
-    return DateTime(date.year, date.month, date.day, date.hour + numOfHour);
+    if (date == null) {
+      return now;
+    } else {
+      final numOfHour = _getMeetingData(index).numberOfHours;
+      return DateTime(date.year, date.month, date.day, date.hour + numOfHour);
+    }
   }
 
   // @override
@@ -280,62 +230,3 @@ class MeetingDataSource extends CalendarDataSource {
     return jobData;
   }
 }
-
-// // SELECTED JOB
-// class SelectedJobView extends StatelessWidget {
-//   final Job job;
-//   const SelectedJobView({required this.job, Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.all(16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.grey.withOpacity(0.5),
-//             spreadRadius: 1,
-//             blurRadius: 4,
-//             offset: const Offset(0, 1), // changes position of shadow
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           const Text('To Accept job drag it to desired time first '),
-//           const SizedBox(height: 12),
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               // GridView
-//               SizedBox(
-//                 width: 16,
-//                 height: 50,
-//                 child: GridView.builder(
-//                   itemCount: 6,
-//                   padding: EdgeInsets.zero,
-//                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-//                     crossAxisCount: 2,
-//                     mainAxisSpacing: 5.6,
-//                     crossAxisSpacing: 4.2,
-//                   ),
-//                   itemBuilder: (context, index) => Container(
-//                     decoration: const BoxDecoration(
-//                       shape: BoxShape.circle,
-//                       color: Colors.black,
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//               // appointment view
-//               AppointmentView(jobInfo: job),
-//             ],
-//           ),
-//           const SizedBox(height: 16),
-//         ],
-//       ),
-//     );
-//   }
-// }

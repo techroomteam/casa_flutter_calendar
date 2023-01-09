@@ -5,7 +5,7 @@ class Job {
   final String? description;
   final String? unitAddress;
   final int numberOfHours;
-  final DateTime startTime;
+  final DateTime? startTime;
   // availablity list of renter, freelancer need to choose time from this list
   final List<AvailabilityTime>? availabilityList;
 
@@ -13,7 +13,7 @@ class Job {
     this.id,
     this.description,
     this.unitAddress,
-    required this.startTime,
+    this.startTime,
     this.numberOfHours = 3,
     required this.availabilityList,
   });
@@ -24,7 +24,7 @@ class Job {
     String? description,
     String? unitAddress,
     int? numberOfHours,
-    List<AvailabilityTime>? availablityList,
+    List<AvailabilityTime>? availabilityList,
   }) {
     return Job(
       id: id ?? this.id,
@@ -32,7 +32,7 @@ class Job {
       description: description ?? this.description,
       unitAddress: unitAddress ?? this.unitAddress,
       numberOfHours: numberOfHours ?? this.numberOfHours,
-      availabilityList: availablityList ?? this.availabilityList,
+      availabilityList: availabilityList ?? this.availabilityList,
     );
   }
 }

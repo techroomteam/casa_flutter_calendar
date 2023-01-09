@@ -20,24 +20,27 @@ class CalendarDaysListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: daysHeaderViewSetting.headerHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: daysHeaderViewSetting.numberOfDays,
-        itemBuilder: (BuildContext context, int index) {
-          return Padding(
-            padding: const EdgeInsets.only(left: 14),
-            child: WeekDayItemView(
-              activeViewDate: activeDate != null
-                  ? DateTime(
-                      activeDate!.year, activeDate!.month, activeDate!.day)
-                  : DateTime(now.year, now.month, now.day),
-              dateTime: DateTime(now.year, now.month, now.day + index),
-              availableDaysList: daysHeaderViewSetting.activeDaysList,
-              daysHeaderViewSetting: daysHeaderViewSetting,
-              onTap: onNewSelection,
-            ),
-          );
-        },
+      child: Padding(
+        padding: const EdgeInsets.only(right: 12),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: daysHeaderViewSetting.numberOfDays,
+          itemBuilder: (BuildContext context, int index) {
+            return Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: WeekDayItemView(
+                activeViewDate: activeDate != null
+                    ? DateTime(
+                        activeDate!.year, activeDate!.month, activeDate!.day)
+                    : DateTime(now.year, now.month, now.day),
+                dateTime: DateTime(now.year, now.month, now.day + index),
+                availableDaysList: daysHeaderViewSetting.activeDaysList,
+                daysHeaderViewSetting: daysHeaderViewSetting,
+                onTap: onNewSelection,
+              ),
+            );
+          },
+        ),
       ),
     );
   }

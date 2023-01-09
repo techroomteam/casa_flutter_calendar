@@ -1,4 +1,5 @@
 import 'package:casa_flutter_calendar/src/common/constants.dart';
+import 'package:casa_flutter_calendar/src/common/date_extension.dart';
 import 'package:casa_flutter_calendar/src/model/calendar_data_source.dart';
 import 'package:casa_flutter_calendar/src/model/calendar_appointment.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +115,7 @@ class AppointmentHelper {
       minutes: ((offset / timeIntervalHeight) * timeIntervalInMinutes).toInt(),
     );
 
-    //#TODO: 2: Convert droppedTime to DateTime
+    // 2: Convert droppedTime to DateTime
     var date = duration.toString().split(":");
     var hrs = int.parse(date[0]);
     var mns = int.parse(date[1]);
@@ -131,18 +132,20 @@ class AppointmentHelper {
   /// Need to pass [CalendarAppointment] (dropped) appointment
   ///
   /// This method will return appointment if user try to place it on another appointment otherwise it will return null
-  static CalendarAppointment? getCalendarAppointmentOnPoint(
-      double yPoint,
-      CalendarAppointment dropedAppointment,
-      List<CalendarAppointment> appointments) {
-    // var x = offset.dx;
+  static CalendarAppointment? getAllCalendarAppointmentOnPoint(
+    double yPoint,
+    CalendarAppointment dropedAppointment,
+    List<CalendarAppointment> appointments,
+    DateTime activeDate,
+  ) {
     // #1: Calculate dropped appointment top and bottom position
     var appointmentTop = yPoint - totalExtraHeight;
     int indexOfDroppedAppointment = appointments.indexOf(dropedAppointment);
     var appointmentDurationInInt = getAppoinmentDurationInInt(
         indexOfDroppedAppointment,
         appointment: dropedAppointment);
-    var appointmentBottom = appointmentTop + (appointmentDurationInInt * 80);
+    var appointmentBottom = appointmentTop +
+        (appointmentDurationInInt * timeSlotViewSettings.timeIntervalHeight);
 
     if (appointments.isEmpty) {
       return null;
@@ -150,23 +153,26 @@ class AppointmentHelper {
 
     CalendarAppointment? selectedAppointmentView;
     for (int i = 0; i < appointments.length; i++) {
-      final CalendarAppointment appointmentView = appointments[i];
-      // debugPrint("index: $i");
-      // debugPrint("appointmentView.id: ${appointmentView.id}");
-      // debugPrint("dropedAppointment.id: ${dropedAppointment.id}");
-      // #2: If [appointmentView] is equal to [dropedAppointment] ignore it
-      if (appointmentView.id != dropedAppointment.id &&
-          appointmentView.appointmentRect != null) {
-        // debugPrint("Index: $i");
-        // debugPrint(
-        //     "AppointmentOnPoint RRect: ${appointmentView.appointmentRect}");
+      // only compare record of active date, otherwise placement of job on Area of some other date will also not work
+      final appointmentTime = appointments[i].startTime!;
+      // remove hours, minutes or seconds from DateTime for easy comparision
+      final appointmentTimeToDate = appointmentTime.dateToYMDTime();
+      final activeDateToDate = activeDate.dateToYMDTime();
 
-        if ((appointmentTop >= appointmentView.appointmentRect!.top &&
-                appointmentTop <= appointmentView.appointmentRect!.bottom) ||
-            (appointmentBottom >= appointmentView.appointmentRect!.top &&
-                appointmentBottom <= appointmentView.appointmentRect!.bottom)) {
-          selectedAppointmentView = appointmentView;
-          break;
+      if (appointmentTimeToDate.compareTo(activeDateToDate) == 0) {
+        final CalendarAppointment appointmentView = appointments[i];
+
+        // #2: If [appointmentView] is equal to [dropedAppointment] ignore it
+        if (appointmentView.id != dropedAppointment.id &&
+            appointmentView.appointmentRect != null) {
+          if ((appointmentTop >= appointmentView.appointmentRect!.top &&
+                  appointmentTop <= appointmentView.appointmentRect!.bottom) ||
+              (appointmentBottom >= appointmentView.appointmentRect!.top &&
+                  appointmentBottom <=
+                      appointmentView.appointmentRect!.bottom)) {
+            selectedAppointmentView = appointmentView;
+            break;
+          }
         }
       }
     }

@@ -1,5 +1,4 @@
 import 'package:casa_flutter_calendar/src/common/constants.dart';
-import 'package:casa_flutter_calendar/src/model/calendar_appointment.dart';
 import 'package:casa_flutter_calendar/src/settings/time_slot_view_setting.dart';
 import 'package:flutter/material.dart';
 
@@ -81,16 +80,17 @@ class CalendarViewHelper {
     return (offset.dy + scrollOffset) / timeIntervalHeight;
   }
 
-  ///
+  /// This method will return true if dateTime is in available area
   static bool isTimeSlotInAvailableArea(DateTime dateTime) {
     var availableStartTime = timeSlotViewSettings.availableStartTime;
     var availableEndTime = timeSlotViewSettings.availableEndTime;
 
-    // debugPrint("dateTime: $dateTime");
+    debugPrint(
+        "availableStartTime: ${timeSlotViewSettings.availableStartTime}");
+    debugPrint("availableEndTime: ${timeSlotViewSettings.availableEndTime}");
+
     if (availableStartTime == null || availableEndTime == null) {
-      // debugPrint("availableStartHour: $availableStartHour");
-      // debugPrint("availableEndHour: $availableEndHour");
-      return true;
+      return false;
     } else {
       DateTime startTime = DateTime(dateTime.year, dateTime.month, dateTime.day,
           availableStartTime.hour, availableStartTime.minute);
@@ -103,6 +103,24 @@ class CalendarViewHelper {
       } else {
         return false;
       }
+    }
+  }
+
+  /// This method will compare dropped appoinment start and end time with availablity time, if availabe then allow placing
+  static bool isAppointmentDroppedOnAvailableArea(
+      DateTime startTime, DateTime endTime) {
+    bool isStartTimeAvailable = isTimeSlotInAvailableArea(startTime);
+    bool isEndTimeAvailable = isTimeSlotInAvailableArea(endTime);
+
+    // debugPrint("startTime: $startTime");
+    // debugPrint("endTime: $endTime");
+    // debugPrint("isStartTimeAvailable: $isStartTimeAvailable");
+    // debugPrint("isEndTimeAvailable: $isEndTimeAvailable");
+
+    if (isStartTimeAvailable && isEndTimeAvailable) {
+      return true;
+    } else {
+      return false;
     }
   }
 }

@@ -33,10 +33,12 @@ extension DateTimeExtension on DateTime {
     return weekdayName[weekday];
   }
 
+  DateTime dateToYMDTime() {
+    return DateTime(year, month, day);
+  }
+
   // date to YMD...
-  String dateToYMD() {
+  String dateToYMDString() {
     return '$year-${month <= 9 ? '0$month' : month.toString()}-${day <= 9 ? '0$day' : day.toString()}';
   }
-  //
-
 }

@@ -19,13 +19,12 @@ class CfCalendar extends StatefulWidget {
 
   /// This appointment will be stacked into calendar view
   final CalendarAppointment unScheduleAppointment;
-  // final CalendarAppointment selectedAppointment;
 
   final DateTime activeDate;
 
-  /// appointmentObject is object from [dataSource.appointments]
-  final Widget Function(BuildContext, CalendarAppointment appointmentObject,
-      CalendarAppointment selectedAppointment, Key? key)? appointmentBuilder;
+  // /// appointmentObject is object from [dataSource.appointments]
+  // final Widget Function(BuildContext, CalendarAppointment appointmentObject,
+  //     CalendarAppointment selectedAppointment, Key? key)? appointmentBuilder;
   final void Function(DateTime)? onViewChanged;
   final TimeSlotViewSettings timeSlotViewSetting;
   final DaysHeaderViewSetting daysHeaderViewSetting;
@@ -34,7 +33,7 @@ class CfCalendar extends StatefulWidget {
     required this.unScheduleAppointment,
     // required this.selectedAppointment,
     required this.activeDate,
-    this.appointmentBuilder,
+    // this.appointmentBuilder,
     this.timeSlotViewSetting = const TimeSlotViewSettings(),
     this.daysHeaderViewSetting = const DaysHeaderViewSetting(),
     this.onViewChanged,
@@ -46,7 +45,6 @@ class CfCalendar extends StatefulWidget {
 }
 
 class _CfCalendarState extends State<CfCalendar> {
-  // final GlobalKey _draggableKey = GlobalKey();
   final _listViewKey = GlobalKey();
   // scroll controller
   final scrollController = ScrollController();
@@ -54,6 +52,10 @@ class _CfCalendarState extends State<CfCalendar> {
   /// This list hold list of widgets created with help of
   List<Widget> appointmentsWidgetList = [];
   bool _isDragging = false;
+
+  //
+  late double appointmentFeedbackWidth =
+      MediaQuery.of(context).size.width / 1.16;
 
   //
   List<CalendarAppointment> appointmentsList = [];
@@ -77,6 +79,17 @@ class _CfCalendarState extends State<CfCalendar> {
 
     //
     unScheduleAppointment = widget.unScheduleAppointment;
+    // check availablility of unScheduleAppointment
+
+    Future.delayed(const Duration(milliseconds: 400), () {
+      checkSelectedAppointmentAvailability(unScheduleAppointment);
+      debugPrint("initState");
+    });
+    // WidgetsBinding.instance.addPersistentFrameCallback((_) {
+
+    // });
+
+    debugPrint("InitState2");
 
     super.initState();
   }
@@ -117,20 +130,22 @@ class _CfCalendarState extends State<CfCalendar> {
                       int index = appointmentsList.indexWhere((element) =>
                           element.id == widget.unScheduleAppointment.id);
 
-                      debugPrint("IndexInList: $index");
-
                       appointmentsList.removeAt(index);
-
-                      //
                       unScheduleAppointment = widget.unScheduleAppointment;
                     }
+
+                    // if selected appointment is other then unschedule appointment then restore the initial
+                    selectedAppointment = widget.unScheduleAppointment;
+
+                    // recheck the availablility
+                    checkSelectedAppointmentAvailability(selectedAppointment);
+
                     setState(() {});
                   },
 
                   activeDate: activeDate,
                 ),
 
-                // const SizedBox(height: 24),
                 // TimeSlot and TimeRuler View
                 Expanded(
                   child: _createListener(
@@ -142,7 +157,6 @@ class _CfCalendarState extends State<CfCalendar> {
                         controller: scrollController,
                         physics: const ClampingScrollPhysics(),
                         padding: EdgeInsets.zero,
-                        // physics: const AlwaysScrollableScrollPhysics(),
                         children: [
                           Row(
                             children: [
@@ -206,14 +220,15 @@ class _CfCalendarState extends State<CfCalendar> {
                     child: const CasaButton(text: 'Accept'),
                   )
                 : LongPressDraggable<CalendarAppointment>(
-                    // axis: Axis.vertical,
-                    data: widget.unScheduleAppointment,
-                    feedback: Material(
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width / 1.16,
-                        child: appointmentBuilder(unScheduleAppointment!),
-                      ),
-                    ),
+                    data: unScheduleAppointment,
+                    onDragStarted: () {
+                      // #1: Change [selectedAppointment] data
+                      selectedAppointment = widget.unScheduleAppointment;
+                      // #2: Change availablity slots
+                      checkSelectedAppointmentAvailability(selectedAppointment);
+                      setState(() {});
+                    },
+                    feedback: feedbackAppointmentBuilder(unScheduleAppointment),
                     childWhenDragging: const SizedBox.shrink(),
                     child: UnScheduleJobView(
                       unscheduleAppointmentObject: unScheduleAppointment,
@@ -228,82 +243,95 @@ class _CfCalendarState extends State<CfCalendar> {
     );
   }
 
+  Widget feedbackAppointmentBuilder(CalendarAppointment? appointment) {
+    if (appointment == null) {
+      return const SizedBox.shrink();
+    }
+
+    dynamic appointmentData = appointment.data;
+    int numberOfHours = appointmentData.numberOfHours;
+
+    return Material(
+      child: SizedBox(
+        width: appointmentFeedbackWidth,
+        height: timeSlotViewSettings.timeIntervalHeight * numberOfHours,
+        child: appointmentBuilder(appointment),
+      ),
+    );
+  }
+
   Widget appointmentBuilder(CalendarAppointment appointment,
       {double? customHeight}) {
     bool isSelectedJob = selectedAppointment.id == appointment.id;
+
     final numberOfHours =
         AppointmentHelper.getAppoinmentDurationInHour(appointment);
-    // debugPrint("appointmentBuilder");
-    return GestureDetector(
+
+    return AppointmentView(
+      height: customHeight ??
+          timeSlotViewSettings.timeIntervalHeight * numberOfHours,
+      jobInfo: appointment.data,
+      color: isSelectedJob ? selectedAppointmentColor : appBackgroundColor,
+      textColor: isSelectedJob ? Colors.white : blackAccent1,
       onTap: () {
         // #1: Change [selectedAppointment] data
         selectedAppointment = appointment;
         // #2: Change availablity slots
-        updateAvailabilityAccordingToSelectedAppointment(appointment.data);
-        // debugPrint("On appointment Tap");
+        checkSelectedAppointmentAvailability(appointment);
         setState(() {});
       },
-      child: AppointmentView(
-        height: customHeight ??
-            timeSlotViewSettings.timeIntervalHeight * numberOfHours,
-        jobInfo: appointment.data,
-        color: isSelectedJob ? selectedAppointmentColor : appBackgroundColor,
-        textColor: isSelectedJob ? Colors.white : blackAccent1,
-      ),
     );
-    //     widget.appointmentBuilder!(
-    //   context,
-    //   appointment,
-    //   selectedAppointment,
-    //   // AppointmentHelper.appointmentsList[i],
-    //   null,
-    // );
   }
 
   /// this method will covert [CasaAppointment] list to widgetsList
   /// We also need to check if appointment is on the active date, becasue we only need to show active date appointments on active view
   List<Widget> getListOfAppointmentWidgets() {
-    debugPrint("getListOfAppointmentWidgets");
+    // debugPrint("getListOfAppointmentWidgets");
     List<Widget> childrens = [];
 
     for (int i = 0; i < appointmentsList.length; i++) {
       final appointment = appointmentsList[i];
 
-      debugPrint("appointment: ${appointment.toString()}");
-
       /// startTime or endTime values could be null after draging unsceduled appointment on the DragTarget
       /// we should assigned those values according to dragged position
-      debugPrint("Index Loop: $i");
+
       final appointmentTime = appointment.startTime!;
       // remove hours, minutes or seconds from DateTime for easy comparision
-      final appTimeToDate = DateTime(
-          appointmentTime.year, appointmentTime.month, appointmentTime.day);
-      final activeDateToDate =
-          DateTime(activeDate.year, activeDate.month, activeDate.day);
+      final appointmentTimeToDate = appointmentTime.dateToYMDTime();
+      final activeDateToDate = activeDate.dateToYMDTime();
 
-      // debugPrint("appTimeToDate: $appTimeToDate");
-      // debugPrint("activeDateToDate: $activeDateToDate");
-
-      if (appTimeToDate.compareTo(activeDateToDate) == 0) {
+      if (appointmentTimeToDate.compareTo(activeDateToDate) == 0) {
         childrens.add(
           Positioned(
-            top: appointment.appointmentRect!.top,
-            left: 0,
-            right: 0,
-            child: widget.appointmentBuilder != null
-                ? LongPressDraggable<CalendarAppointment>(
-                    axis: Axis.vertical,
-                    data: appointment,
-                    onDragStarted: () => _isDragging = true,
-                    onDragEnd: (details) => _isDragging = false,
-                    onDraggableCanceled: (velocity, offset) =>
-                        _isDragging = false,
-                    feedback: Material(child: appointmentBuilder(appointment)),
-                    childWhenDragging: const SizedBox.shrink(),
-                    child: appointmentBuilder(appointment),
-                  )
-                : defaultAppointmentView(),
-          ),
+              top: appointment.appointmentRect!.top,
+              left: 0,
+              right: 0,
+              child:
+                  // widget.appointmentBuilder != null
+                  //     ?
+                  LongPressDraggable<CalendarAppointment>(
+                axis: Axis.vertical,
+                data: appointment,
+                onDragStarted: () {
+                  _isDragging = true;
+                  selectedAppointment = appointment;
+                  checkSelectedAppointmentAvailability(appointment);
+                  debugPrint("onDragStarted");
+                },
+                onDragEnd: (details) => _isDragging = false,
+                onDraggableCanceled: (velocity, offset) => _isDragging = false,
+                // feedback: Material(
+                //   child: SizedBox(
+                //     width: appointmentFeedbackWidth,
+                //     child: appointmentBuilder(appointment),
+                //   ),
+                // ),
+                feedback: feedbackAppointmentBuilder(appointment),
+                childWhenDragging: const SizedBox.shrink(),
+                child: appointmentBuilder(appointment),
+              )
+              // : defaultAppointmentView(),
+              ),
         );
       }
     }
@@ -312,54 +340,31 @@ class _CfCalendarState extends State<CfCalendar> {
   }
 
   /// This method will get renter availablity of particular day from Ticket Availablity object
-  void updateAvailabilityAccordingToSelectedAppointment(dynamic appointment) {
+  void checkSelectedAppointmentAvailability(CalendarAppointment? appointment) {
     String selectedDay = activeDate.weekdayName()!;
-    debugPrint('selectedDay: $selectedDay');
+    if (appointment != null) {
+      dynamic appointmentObject = appointment.data;
+      bool isAvailable = false;
 
-    dynamic appointmentObject = appointment;
+      for (var availability in appointmentObject.availabilityList) {
+        if (availability.days.contains(selectedDay)) {
+          // Update the dates in timeSlotViewSettings
+          timeSlotViewSettings = timeSlotViewSettings.copyWith(
+            availableStartTime: availability.fromTime,
+            availableEndTime: availability.toTime,
+          );
 
-    bool isAvailable = false;
-
-    for (var availability in appointmentObject.availabilityList) {
-      if (availability.days.contains(selectedDay)) {
-        // debugPrint("availability: ${availability.days}");
-        // debugPrint("availability from: ${availability.fromTime}");
-        // var availableStartTime = TimeOf(
-        //   activeDate.year,
-        //   activeDate.month,
-        //   activeDate.day,
-        //   availability.fromTime!.hour,
-        //   availability.fromTime!.minute,
-        // );
-        // var availableEndTime = DateTime(
-        //   activeDate.year,
-        //   activeDate.month,
-        //   activeDate.day,
-        //   availability.toTime!.hour,
-        //   availability.toTime!.minute,
-        // );
-
-        // debugPrint("availableStartTime: $availableStartTime");
-        // debugPrint("availableEndTime: $availableEndTime");
-
-        // Update the dates in timeSlotViewSettings
-
-        timeSlotViewSettings = timeSlotViewSettings.copyWith(
-          availableStartTime: availability.fromTime,
-          availableEndTime: availability.toTime,
-        );
-
-        isAvailable = true;
-        break;
+          isAvailable = true;
+          break;
+        }
       }
-    }
 
-    if (!isAvailable) {
-      debugPrint("isAvailable: $isAvailable");
-      timeSlotViewSettings = timeSlotViewSettings.copyWith(
-        availableStartTime: null,
-        availableEndTime: null,
-      );
+      if (!isAvailable) {
+        timeSlotViewSettings = timeSlotViewSettings.copyWith(
+          availableStartTime: null,
+          availableEndTime: null,
+        );
+      }
     }
   }
 
@@ -412,28 +417,28 @@ class _CfCalendarState extends State<CfCalendar> {
     debugPrint("Exact dropOffset: $dropOffset");
 
     int indexOfDroppedAppointment = appointmentsList.indexOf(details.data);
+    debugPrint("indexOfDroppedAppointment: $indexOfDroppedAppointment");
 
     //#1: First check if dropped appoinment is unscheduled
     if (indexOfDroppedAppointment == -1) {
       var droppedAppointment = details.data;
-
       // First add droppedAppointment to the list because it's needed in _updateCalendarAppointmentList
       appointmentsList.add(droppedAppointment);
-      _updateCalendarAppointmentList(droppedAppointment, dropOffset);
-      unScheduleAppointment = null;
-      setState(() {});
+
+      _updateCalendarAppointmentList(droppedAppointment, dropOffset,
+          isUnscheduleAppointment: true);
     } else {
-      var appoinment = AppointmentHelper.getCalendarAppointmentOnPoint(
+      var appoinment = AppointmentHelper.getAllCalendarAppointmentOnPoint(
         details.offset.dy + scrollOffset,
         details.data,
         appointmentsList,
+        activeDate,
       );
 
       // if appointment is null then we're good to update the appointment list
       // else we can't place appointment on another appointment
       if (appoinment == null) {
         _updateCalendarAppointmentList(details.data, dropOffset);
-        setState(() {});
       } else {
         debugPrint('Placing apointment on: ${appoinment.toString()}');
       }
@@ -442,37 +447,37 @@ class _CfCalendarState extends State<CfCalendar> {
 
   /// After [onAcceptWithDetails] if appointment is not placed on another then we need to update Calendar Appointment list
   void _updateCalendarAppointmentList(
-      CalendarAppointment appointment, double dropOffset) {
+    CalendarAppointment appointment,
+    double dropOffset, {
+
+    /// if this is true that means the dropped appointment is not already in appointmentsList
+    bool isUnscheduleAppointment = false,
+  }) {
     int index = appointmentsList.indexOf(appointment);
-    debugPrint("DroppedIndex: $index");
+    // debugPrint("DroppedIndex: $index");
+
+    dynamic appointmentData = appointment.data;
+    int appointmentDuration = appointmentData.numberOfHours;
 
     // #1: Update datetime value according to new positioned value
     DateTime droppedStartTime =
         AppointmentHelper.convertOffsetToDateTime(dropOffset, activeDate);
-    debugPrint("DroppedTime: $droppedStartTime");
+    // debugPrint("droppedStartTime: $droppedStartTime");
+    DateTime droppedEndTime =
+        droppedStartTime.add(Duration(hours: appointmentDuration));
 
     // #2: Make sure dropped time is not in unavailable area
+    // Check both start and end time
 
     bool isAreaAvailable =
-        CalendarViewHelper.isTimeSlotInAvailableArea(droppedStartTime);
+        CalendarViewHelper.isAppointmentDroppedOnAvailableArea(
+            droppedStartTime, droppedEndTime);
+
     debugPrint("isAreaAvailable: $isAreaAvailable");
 
     if (isAreaAvailable) {
-      // var droppedAppointment = appointment;
-      dynamic appointmentData = appointment.data;
-      int appointmentDuration = appointmentData.numberOfHours;
-      appointmentsList[index] = appointmentsList[index].copyWith(
-          startTime: droppedStartTime,
-          endTime: droppedStartTime.add(Duration(hours: appointmentDuration)));
-
-      // appointmentsList[index].startTime = droppedStartTime;
-      // appointmentsList[index].endTime =
-      //     droppedStartTime.add(Duration(hours: appointmentDuration));
-
-      // // #2: get job duration from it's start date and end date
-      // final jobDurationInHour = AppointmentHelper.getAppoinmentDurationInInt(
-      //     index,
-      //     appointment: appointment);
+      appointmentsList[index] = appointmentsList[index]
+          .copyWith(startTime: droppedStartTime, endTime: droppedEndTime);
 
       // #3: Update appointment RRect value
       double timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
@@ -485,12 +490,22 @@ class _CfCalendarState extends State<CfCalendar> {
 
       appointmentsList[index].appointmentRect = rRect;
 
-      debugPrint(
-          "appointmentsList[index]: ${appointmentsList[index].toString()}");
-
-      // // after modifying dropped appointment we're returning it, in case if updated value is needed
-      //  droppedAppointment;
+      /// if appointment is unSchedule and it's dropped on right timeSlot
+      if (isUnscheduleAppointment) {
+        unScheduleAppointment = null;
+      }
+    } else {
+      /// If [isUnscheduleAppointment] then remove it from list in case slot is not available
+      if (isUnscheduleAppointment) {
+        appointmentsList.removeAt(index);
+        unScheduleAppointment = appointment;
+      } else {
+        // if not [isUnscheduleAppointment] then restore the old state
+        appointmentsList[index] = appointment;
+      }
     }
+
+    setState(() {});
   }
 }
 
