@@ -47,7 +47,7 @@ class AppointmentHelper {
             calendarData.getStartTime(index), intervalHeight);
 
     int timeDifferenceInHours =
-        getAppoinmentDurationInInt(index, dataSource: calendarData);
+        getAppoinmentDurationInHour(index, dataSource: calendarData);
 
     // heightFromTop = heightFromTop - totalExtraHeight;
 
@@ -55,7 +55,7 @@ class AppointmentHelper {
     RRect appointmentRect = RRect.fromLTRBAndCorners(0, heightFromTop, 0,
         heightFromTop + intervalHeight * timeDifferenceInHours);
 
-    debugPrint(" _createAppointment appointmentRect: $appointmentRect");
+    // debugPrint(" _createAppointment appointmentRect: $appointmentRect");
 
     app = CalendarAppointment(
       startTime: calendarData.getStartTime(index),
@@ -71,7 +71,7 @@ class AppointmentHelper {
   }
 
   /// This method will get appointment duration from it's start and end time
-  static int getAppoinmentDurationInInt(int index,
+  static int getAppoinmentDurationInHour(int index,
       {CalendarDataSource<Object?>? dataSource,
       CalendarAppointment? appointment}) {
     DateTime startTime;
@@ -89,7 +89,21 @@ class AppointmentHelper {
     return timeDifferenceInHours;
   }
 
-  static int getAppoinmentDurationInHour(CalendarAppointment appointment) {
+  static double appointmentHeightFromNumberOfHour(int jobDurationInHours) {
+    int slotCount = calculateAppointmentSlotCountFromHour(jobDurationInHours);
+
+    return (timeSlotViewSettings.timeIntervalHeight * slotCount);
+  }
+
+  static int calculateAppointmentSlotCountFromHour(int jobDurationInHours) {
+    int hourInMinute = jobDurationInHours * 60;
+    int timeInterval = timeSlotViewSettings.timeInterval.inMinutes;
+
+    return hourInMinute ~/ timeInterval;
+  }
+
+  static int getAppoinmentDurationFromCalendarAppointment(
+      CalendarAppointment appointment) {
     DateTime? startTime = appointment.startTime;
 
     if (startTime == null) {
@@ -101,7 +115,8 @@ class AppointmentHelper {
     }
   }
 
-  ///
+  /// This method covert dropped offset to dateTime according to timeIntervalHeight and timeInterval.
+  /// This also make sure, value should be either exact hour or half our, not in between
   static DateTime convertOffsetToDateTime(
     double offset,
 
@@ -110,15 +125,24 @@ class AppointmentHelper {
   ) {
     final timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
     final timeIntervalInMinutes = timeSlotViewSettings.timeInterval.inMinutes;
-    debugPrint("timeIntervalInMinutes: $timeIntervalInMinutes");
+    // debugPrint("timeIntervalInMinutes: $timeIntervalInMinutes");
     Duration duration = Duration(
       minutes: ((offset / timeIntervalHeight) * timeIntervalInMinutes).toInt(),
     );
 
-    // 2: Convert droppedTime to DateTime
+    // #2: Convert droppedTime to DateTime
     var date = duration.toString().split(":");
     var hrs = int.parse(date[0]);
     var mns = int.parse(date[1]);
+    // #3: Check if minutes are less or equal then 15 then round it to 0 else 30
+    if (mns >= 0 && mns <= 15) {
+      mns = 0;
+    } else if (mns > 15 && mns <= 45) {
+      mns = 30;
+    } else {
+      hrs += 1;
+      mns = 0;
+    }
     return DateTime(dateTime.year, dateTime.month, dateTime.day, hrs, mns);
   }
 
@@ -141,7 +165,7 @@ class AppointmentHelper {
     // #1: Calculate dropped appointment top and bottom position
     var appointmentTop = yPoint - totalExtraHeight;
     int indexOfDroppedAppointment = appointments.indexOf(dropedAppointment);
-    var appointmentDurationInInt = getAppoinmentDurationInInt(
+    var appointmentDurationInInt = getAppoinmentDurationInHour(
         indexOfDroppedAppointment,
         appointment: dropedAppointment);
     var appointmentBottom = appointmentTop +

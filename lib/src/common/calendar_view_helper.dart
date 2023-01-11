@@ -1,3 +1,4 @@
+import 'package:casa_flutter_calendar/src/common/appointment_helper.dart';
 import 'package:casa_flutter_calendar/src/common/constants.dart';
 import 'package:casa_flutter_calendar/src/settings/time_slot_view_setting.dart';
 import 'package:flutter/material.dart';
@@ -63,7 +64,13 @@ class CalendarViewHelper {
   ///
   static double getAppointmentPositionAtTimeSlotFromStartTime(
       DateTime startTime, double timeIntervalHeight) {
-    return startTime.hour * timeIntervalHeight;
+    int timeInMinutes = startTime.hour * 60 + startTime.minute;
+    int timeIntervalInInt = timeSlotViewSettings.timeInterval.inMinutes;
+    debugPrint("timeIntervalInInt: $timeIntervalInInt");
+    debugPrint("startTime.hour: ${startTime.hour}");
+    int totalSlotCount = timeInMinutes ~/ timeIntervalInInt;
+    debugPrint("totalSlotCount: $totalSlotCount");
+    return totalSlotCount * timeIntervalHeight;
   }
 
   // static double convertDroppedOffsetToDateTime() {}
@@ -85,9 +92,9 @@ class CalendarViewHelper {
     var availableStartTime = timeSlotViewSettings.availableStartTime;
     var availableEndTime = timeSlotViewSettings.availableEndTime;
 
-    debugPrint(
-        "availableStartTime: ${timeSlotViewSettings.availableStartTime}");
-    debugPrint("availableEndTime: ${timeSlotViewSettings.availableEndTime}");
+    // debugPrint(
+    //     "availableStartTime: ${timeSlotViewSettings.availableStartTime}");
+    // debugPrint("availableEndTime: ${timeSlotViewSettings.availableEndTime}");
 
     if (availableStartTime == null || availableEndTime == null) {
       return false;

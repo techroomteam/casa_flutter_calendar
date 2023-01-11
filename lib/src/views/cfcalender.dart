@@ -21,13 +21,15 @@ class CfCalendar extends StatefulWidget {
   final CalendarAppointment unScheduleAppointment;
 
   final DateTime activeDate;
+  final TimeSlotViewSettings timeSlotViewSetting;
+  final DaysHeaderViewSetting daysHeaderViewSetting;
 
   // /// appointmentObject is object from [dataSource.appointments]
   // final Widget Function(BuildContext, CalendarAppointment appointmentObject,
   //     CalendarAppointment selectedAppointment, Key? key)? appointmentBuilder;
   final void Function(DateTime)? onViewChanged;
-  final TimeSlotViewSettings timeSlotViewSetting;
-  final DaysHeaderViewSetting daysHeaderViewSetting;
+  final void Function(List<CalendarAppointment>) onAccept;
+
   const CfCalendar({
     required this.dataSource,
     required this.unScheduleAppointment,
@@ -37,6 +39,7 @@ class CfCalendar extends StatefulWidget {
     this.timeSlotViewSetting = const TimeSlotViewSettings(),
     this.daysHeaderViewSetting = const DaysHeaderViewSetting(),
     this.onViewChanged,
+    required this.onAccept,
     Key? key,
   }) : super(key: key);
 
@@ -74,22 +77,26 @@ class _CfCalendarState extends State<CfCalendar> {
     totalExtraHeight = headerHeight + extraHeight;
     // update [timeSlotViewSettings] in constant file
     timeSlotViewSettings = widget.timeSlotViewSetting;
+    // // update the [timeSlotViewSetting.timeIntervalHeight] according to timeInterval
+    // debugPrint(
+    //     "timeSlotViewSettings.timeInterval.inMinutes: ${timeSlotViewSettings.timeInterval.inMinutes}");
+    // timeSlotViewSettings = timeSlotViewSettings.copyWith(
+    //   timeIntervalHeight: timeSlotViewSettings.timeIntervalHeight *
+    //       (60 / timeSlotViewSettings.timeInterval.inMinutes),
+    // );
+
     //
     initAppointmentList(widget.dataSource);
 
     //
     unScheduleAppointment = widget.unScheduleAppointment;
+
     // check availablility of unScheduleAppointment
-
     Future.delayed(const Duration(milliseconds: 400), () {
+      debugPrint("InitState check Availablility");
       checkSelectedAppointmentAvailability(unScheduleAppointment);
-      debugPrint("initState");
+      setState(() {});
     });
-    // WidgetsBinding.instance.addPersistentFrameCallback((_) {
-
-    // });
-
-    debugPrint("InitState2");
 
     super.initState();
   }
@@ -139,8 +146,6 @@ class _CfCalendarState extends State<CfCalendar> {
 
                     // recheck the availablility
                     checkSelectedAppointmentAvailability(selectedAppointment);
-
-                    setState(() {});
                   },
 
                   activeDate: activeDate,
@@ -195,31 +200,33 @@ class _CfCalendarState extends State<CfCalendar> {
             ),
           ),
 
-          //
           //selected job
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: unScheduleAppointment == null
-                ? Container(
-                    padding: const EdgeInsets.only(
-                        left: 16, right: 16, top: 16, bottom: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 1,
-                          blurRadius: 4,
-                          offset:
-                              const Offset(0, 1), // changes position of shadow
-                        ),
-                      ],
+                ? GestureDetector(
+                    onTap: () => widget.onAccept(appointmentsList),
+                    child: Container(
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, top: 16, bottom: 24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 1,
+                            blurRadius: 4,
+                            // changes position of shadow
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: const CasaButton(text: 'Accept'),
                     ),
-                    child: const CasaButton(text: 'Accept'),
                   )
-                : LongPressDraggable<CalendarAppointment>(
+                : Draggable<CalendarAppointment>(
                     data: unScheduleAppointment,
                     onDragStarted: () {
                       // #1: Change [selectedAppointment] data
@@ -250,11 +257,13 @@ class _CfCalendarState extends State<CfCalendar> {
 
     dynamic appointmentData = appointment.data;
     int numberOfHours = appointmentData.numberOfHours;
+    double appointmentHeight =
+        AppointmentHelper.appointmentHeightFromNumberOfHour(numberOfHours);
 
     return Material(
       child: SizedBox(
         width: appointmentFeedbackWidth,
-        height: timeSlotViewSettings.timeIntervalHeight * numberOfHours,
+        height: appointmentHeight,
         child: appointmentBuilder(appointment),
       ),
     );
@@ -265,11 +274,14 @@ class _CfCalendarState extends State<CfCalendar> {
     bool isSelectedJob = selectedAppointment.id == appointment.id;
 
     final numberOfHours =
-        AppointmentHelper.getAppoinmentDurationInHour(appointment);
+        AppointmentHelper.getAppoinmentDurationFromCalendarAppointment(
+            appointment);
+
+    double appointmentHeight =
+        AppointmentHelper.appointmentHeightFromNumberOfHour(numberOfHours);
 
     return AppointmentView(
-      height: customHeight ??
-          timeSlotViewSettings.timeIntervalHeight * numberOfHours,
+      height: customHeight ?? appointmentHeight,
       jobInfo: appointment.data,
       color: isSelectedJob ? selectedAppointmentColor : appBackgroundColor,
       textColor: isSelectedJob ? Colors.white : blackAccent1,
@@ -278,12 +290,11 @@ class _CfCalendarState extends State<CfCalendar> {
         selectedAppointment = appointment;
         // #2: Change availablity slots
         checkSelectedAppointmentAvailability(appointment);
-        setState(() {});
       },
     );
   }
 
-  /// this method will covert [CasaAppointment] list to widgetsList
+  /// this method will convert [CasaAppointment] list to widgetsList
   /// We also need to check if appointment is on the active date, becasue we only need to show active date appointments on active view
   List<Widget> getListOfAppointmentWidgets() {
     // debugPrint("getListOfAppointmentWidgets");
@@ -341,10 +352,15 @@ class _CfCalendarState extends State<CfCalendar> {
 
   /// This method will get renter availablity of particular day from Ticket Availablity object
   void checkSelectedAppointmentAvailability(CalendarAppointment? appointment) {
+    debugPrint("checkSelectedAppointmentAvailability");
+    debugPrint("appointmentid: ${appointment?.id}");
     String selectedDay = activeDate.weekdayName()!;
     if (appointment != null) {
       dynamic appointmentObject = appointment.data;
       bool isAvailable = false;
+
+      debugPrint("selectedDay: $selectedDay");
+      debugPrint("availabilityList: ${appointmentObject.availabilityList}");
 
       for (var availability in appointmentObject.availabilityList) {
         if (availability.days.contains(selectedDay)) {
@@ -359,6 +375,8 @@ class _CfCalendarState extends State<CfCalendar> {
         }
       }
 
+      debugPrint("isAvailable: $isAvailable");
+
       if (!isAvailable) {
         timeSlotViewSettings = timeSlotViewSettings.copyWith(
           availableStartTime: null,
@@ -366,6 +384,8 @@ class _CfCalendarState extends State<CfCalendar> {
         );
       }
     }
+
+    setState(() {});
   }
 
   Widget defaultAppointmentView() {
@@ -462,9 +482,10 @@ class _CfCalendarState extends State<CfCalendar> {
     // #1: Update datetime value according to new positioned value
     DateTime droppedStartTime =
         AppointmentHelper.convertOffsetToDateTime(dropOffset, activeDate);
-    // debugPrint("droppedStartTime: $droppedStartTime");
+    debugPrint("droppedStartTime: $droppedStartTime");
     DateTime droppedEndTime =
         droppedStartTime.add(Duration(hours: appointmentDuration));
+    debugPrint("droppedEndTime: $droppedEndTime");
 
     // #2: Make sure dropped time is not in unavailable area
     // Check both start and end time
@@ -481,10 +502,27 @@ class _CfCalendarState extends State<CfCalendar> {
 
       // #3: Update appointment RRect value
       double timeIntervalHeight = timeSlotViewSettings.timeIntervalHeight;
-      double appRectBottom =
-          dropOffset + timeIntervalHeight * appointmentDuration;
 
-      final rRect = RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
+      int slotCount = AppointmentHelper.calculateAppointmentSlotCountFromHour(
+          appointmentDuration);
+
+      debugPrint("slotCount: $slotCount");
+
+      double heightFromTop =
+          CalendarViewHelper.getAppointmentPositionAtTimeSlotFromStartTime(
+              droppedStartTime, timeIntervalHeight);
+
+      debugPrint("heightFromTop: $heightFromTop");
+
+      double appRectBottom = heightFromTop + timeIntervalHeight * slotCount;
+
+      final rRect =
+          RRect.fromLTRBAndCorners(0, heightFromTop, 0, appRectBottom);
+
+      // double appRectBottom =
+      //     dropOffset + timeIntervalHeight * appointmentDuration;
+
+      // final rRect = RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
       // // update RRect value in droppedAppointment
       // droppedAppointment = droppedAppointment.copyWith(rRect: rRect);
 
@@ -532,6 +570,7 @@ class TimeRulerView extends StatelessWidget {
 
     for (int i = 0; i < timeSlotCount; i++) {
       final double minute = (i * timeInterval) + hour;
+      // debugPrint("minute: $minute");
       currentDate = DateTime(
         currentDate.year,
         currentDate.month,
@@ -544,18 +583,39 @@ class TimeRulerView extends StatelessWidget {
       bool isInAvailableArea =
           CalendarViewHelper.isTimeSlotInAvailableArea(currentDate);
 
+      // debugPrint("currentDate: $currentDate");
+
       final String time =
           DateFormat(timeSlotViewSettings.timeFormat).format(currentDate);
+      String anteMeridiem = DateFormat('a').format(currentDate);
+      // debugPrint("time: $time");
+      const fontSize = 12.0;
       final Text textWidget = Text(
         time,
         style: timeTextStyle.copyWith(
           color: isInAvailableArea ? timeTextColor : unAvailableTimeTextColor,
+          fontSize: fontSize,
         ),
       );
-      children.add(SizedBox(
-        height: timeSlotViewSettings.timeIntervalHeight,
-        child: textWidget,
-      ));
+      final anteMeridiemText = Text(
+        anteMeridiem,
+        style: timeTextStyle.copyWith(
+          color: isInAvailableArea ? timeTextColor : unAvailableTimeTextColor,
+          fontSize: fontSize,
+        ),
+      );
+      children.add(
+        SizedBox(
+          height: timeSlotViewSettings.timeIntervalHeight,
+          child: Column(
+            children: [
+              textWidget,
+              const SizedBox(height: 4),
+              anteMeridiemText,
+            ],
+          ),
+        ),
+      );
     }
 
     return Column(children: children);

@@ -48,7 +48,7 @@ class _CasaFlutterCalendarExampleState
   final unscheduleJob = const Job(
     id: 'Ticket 900',
     description: 'Washing machine not starting',
-    numberOfHours: 4,
+    numberOfHours: 2,
     availabilityList: [
       const AvailabilityTime(
         days: ['Mon'],
@@ -77,7 +77,7 @@ class _CasaFlutterCalendarExampleState
       startTime: DateTime(now.year, now.month, now.day, 13),
       availabilityList: const [
         AvailabilityTime(
-          days: ['Mon'],
+          days: ['Tue'],
           dayAvailability: DayAvailability.noon,
           fromTime: CasaTimeOfDay(hour: 12, minute: 0),
           toTime: CasaTimeOfDay(hour: 20, minute: 0),
@@ -94,12 +94,12 @@ class _CasaFlutterCalendarExampleState
       id: 'Ticket 800',
       description: 'Washing machine not starting',
       numberOfHours: 3,
-      startTime: DateTime(now.year, now.month, now.day + 2, 17),
+      startTime: DateTime(now.year, now.month, now.day, 17),
       availabilityList: const [
         AvailabilityTime(
-          days: ['Fri'],
+          days: ['Tue'],
           dayAvailability: DayAvailability.morning,
-          fromTime: CasaTimeOfDay(hour: 17, minute: 0),
+          fromTime: CasaTimeOfDay(hour: 0, minute: 0),
           toTime: CasaTimeOfDay(hour: 24, minute: 0),
         ),
         AvailabilityTime(
@@ -127,8 +127,11 @@ class _CasaFlutterCalendarExampleState
     return Scaffold(
       appBar: appBar,
       body: CfCalendar(
-        timeSlotViewSetting:
-            TimeSlotViewSettings(timeIntervalHeight: timeIntervalHeight),
+        timeSlotViewSetting: TimeSlotViewSettings(
+          timeIntervalHeight: timeIntervalHeight,
+          timeInterval: const Duration(minutes: 30),
+          timeFormat: 'hh:mm',
+        ),
         daysHeaderViewSetting: DaysHeaderViewSetting(extraHeight: extraHeight),
         dataSource: MeetingDataSource(_getDataSource()),
         unScheduleAppointment: unScheduleAppointment,
@@ -151,6 +154,9 @@ class _CasaFlutterCalendarExampleState
         //   },
         // ),
         // ],
+        onAccept: (appointmentList) {
+          debugPrint("appointmentList: $appointmentList");
+        },
       ),
     );
   }
