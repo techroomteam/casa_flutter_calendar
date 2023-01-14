@@ -57,13 +57,16 @@ class AppointmentView extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        jobInfo.id ?? '',
-                        style: bodyText3.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: textColor,
-                        ),
-                      ),
+                      // Text(
+                      //   jobInfo.id ?? '',
+                      //   style: bodyText3.copyWith(
+                      //     fontWeight: FontWeight.w600,
+                      //     color: textColor,
+                      //     overflow: TextOverflow.ellipsis,
+                      //   ),
+                      // ),
+
+                      const SizedBox(width: 6),
                       // const Spacer(),
                       // // Sized Box...
                       // const SizedBox(width: 140),
@@ -109,7 +112,7 @@ class AppointmentView extends StatelessWidget {
                           ),
 
                           // Sized Box...
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                         ],
                       ),
                       // const SizedBox(width: 12),

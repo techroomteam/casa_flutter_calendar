@@ -9,35 +9,46 @@ import 'package:casa_flutter_calendar/src/settings/days_header_view_setting.dart
 import 'package:casa_flutter_calendar/src/settings/time_slot_view_setting.dart';
 import 'package:casa_flutter_calendar/src/views/week_day_view.dart';
 import 'package:casa_flutter_calendar/src/views/widgets/casa_button.dart';
+import 'package:casa_flutter_calendar/src/views/widgets/time_ruler_view.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' show DateFormat;
 
 import 'widgets/appointment_view.dart';
+import 'widgets/time_slot_view.dart';
+import 'widgets/unschedule_job_view.dart';
 
 class CfCalendar extends StatefulWidget {
   final CalendarDataSource<Object?> dataSource;
 
   /// This appointment will be stacked into calendar view
-  final CalendarAppointment unScheduleAppointment;
+  final CalendarAppointment? unScheduleAppointment;
 
   final DateTime activeDate;
   final TimeSlotViewSettings timeSlotViewSetting;
   final DaysHeaderViewSetting daysHeaderViewSetting;
 
+  /// disable drag functionality
+  final bool isDragAllowed;
+
   // /// appointmentObject is object from [dataSource.appointments]
   // final Widget Function(BuildContext, CalendarAppointment appointmentObject,
   //     CalendarAppointment selectedAppointment, Key? key)? appointmentBuilder;
   final void Function(DateTime)? onViewChanged;
-  final void Function(List<CalendarAppointment>) onAccept;
+
+  /// if user drag and drop the schedule appointment on available area then triggered the onJobScheduleChange function
+  final void Function(String jobID, DateTime newScheduleTime)?
+      onJobScheduleChange;
+  final void Function(CalendarAppointment, DateTime) onAccept;
 
   const CfCalendar({
     required this.dataSource,
-    required this.unScheduleAppointment,
+    this.unScheduleAppointment,
     // required this.selectedAppointment,
     required this.activeDate,
     // this.appointmentBuilder,
     this.timeSlotViewSetting = const TimeSlotViewSettings(),
     this.daysHeaderViewSetting = const DaysHeaderViewSetting(),
+    this.isDragAllowed = true,
+    this.onJobScheduleChange,
     this.onViewChanged,
     required this.onAccept,
     Key? key,
@@ -62,7 +73,7 @@ class _CfCalendarState extends State<CfCalendar> {
 
   //
   List<CalendarAppointment> appointmentsList = [];
-  late CalendarAppointment selectedAppointment = widget.unScheduleAppointment;
+  late CalendarAppointment? selectedAppointment = widget.unScheduleAppointment;
   CalendarAppointment? unScheduleAppointment;
   late DateTime activeDate = widget.activeDate;
 
@@ -133,9 +144,10 @@ class _CfCalendarState extends State<CfCalendar> {
                     // #1: Update activeDate value
                     activeDate = newDate;
                     // #2: if unschedule appointment has been placed on previous date, then move it back to bottom stacked position
-                    if (unScheduleAppointment == null) {
+                    if (unScheduleAppointment == null &&
+                        widget.unScheduleAppointment != null) {
                       int index = appointmentsList.indexWhere((element) =>
-                          element.id == widget.unScheduleAppointment.id);
+                          element.id == widget.unScheduleAppointment!.id);
 
                       appointmentsList.removeAt(index);
                       unScheduleAppointment = widget.unScheduleAppointment;
@@ -147,7 +159,6 @@ class _CfCalendarState extends State<CfCalendar> {
                     // recheck the availablility
                     checkSelectedAppointmentAvailability(selectedAppointment);
                   },
-
                   activeDate: activeDate,
                 ),
 
@@ -205,45 +216,60 @@ class _CfCalendarState extends State<CfCalendar> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: unScheduleAppointment == null
-                ? GestureDetector(
-                    onTap: () => widget.onAccept(appointmentsList),
-                    child: Container(
-                      padding: const EdgeInsets.only(
-                          left: 16, right: 16, top: 16, bottom: 24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 4,
-                            // changes position of shadow
-                            offset: const Offset(0, 1),
+            child: widget.unScheduleAppointment == null
+                ? const SizedBox.shrink()
+                : unScheduleAppointment == null
+                    ? GestureDetector(
+                        onTap: () {
+                          final calendarApp = appointmentsList.last;
+                          DateTime scheduleJobTime = DateTime(
+                            activeDate.year,
+                            activeDate.month,
+                            activeDate.day,
+                            calendarApp.startTime!.hour,
+                            calendarApp.startTime!.minute,
+                          );
+                          widget.onAccept(
+                              appointmentsList.last, scheduleJobTime);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.only(
+                              left: 16, right: 16, top: 16, bottom: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                spreadRadius: 1,
+                                blurRadius: 4,
+                                // changes position of shadow
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: const CasaButton(text: 'Accept'),
+                        ),
+                      )
+                    : Draggable<CalendarAppointment>(
+                        data: unScheduleAppointment,
+                        onDragStarted: () {
+                          // #1: Change [selectedAppointment] data
+                          selectedAppointment = widget.unScheduleAppointment;
+                          // #2: Change availablity slots
+                          checkSelectedAppointmentAvailability(
+                              selectedAppointment);
+                          setState(() {});
+                        },
+                        feedback:
+                            feedbackAppointmentBuilder(unScheduleAppointment),
+                        childWhenDragging: const SizedBox.shrink(),
+                        child: UnScheduleJobView(
+                          unscheduleAppointmentObject: unScheduleAppointment,
+                          selectedAppointment: selectedAppointment!,
+                          appointmentBuilder: (_, app, __, ___) =>
+                              appointmentBuilder(app, customHeight: 80),
+                        ),
                       ),
-                      child: const CasaButton(text: 'Accept'),
-                    ),
-                  )
-                : Draggable<CalendarAppointment>(
-                    data: unScheduleAppointment,
-                    onDragStarted: () {
-                      // #1: Change [selectedAppointment] data
-                      selectedAppointment = widget.unScheduleAppointment;
-                      // #2: Change availablity slots
-                      checkSelectedAppointmentAvailability(selectedAppointment);
-                      setState(() {});
-                    },
-                    feedback: feedbackAppointmentBuilder(unScheduleAppointment),
-                    childWhenDragging: const SizedBox.shrink(),
-                    child: UnScheduleJobView(
-                      unscheduleAppointmentObject: unScheduleAppointment,
-                      selectedAppointment: selectedAppointment,
-                      appointmentBuilder: (_, app, __, ___) =>
-                          appointmentBuilder(app, customHeight: 80),
-                    ),
-                  ),
           ),
         ],
       ),
@@ -256,7 +282,7 @@ class _CfCalendarState extends State<CfCalendar> {
     }
 
     dynamic appointmentData = appointment.data;
-    int numberOfHours = appointmentData.numberOfHours;
+    int numberOfHours = appointmentData.jobDurationInHours;
     double appointmentHeight =
         AppointmentHelper.appointmentHeightFromNumberOfHour(numberOfHours);
 
@@ -271,7 +297,10 @@ class _CfCalendarState extends State<CfCalendar> {
 
   Widget appointmentBuilder(CalendarAppointment appointment,
       {double? customHeight}) {
-    bool isSelectedJob = selectedAppointment.id == appointment.id;
+    bool isSelectedJob = false;
+    if (selectedAppointment != null) {
+      isSelectedJob = selectedAppointment!.id == appointment.id;
+    }
 
     final numberOfHours =
         AppointmentHelper.getAppoinmentDurationFromCalendarAppointment(
@@ -323,6 +352,7 @@ class _CfCalendarState extends State<CfCalendar> {
                   LongPressDraggable<CalendarAppointment>(
                 axis: Axis.vertical,
                 data: appointment,
+                maxSimultaneousDrags: widget.isDragAllowed ? 1 : 0,
                 onDragStarted: () {
                   _isDragging = true;
                   selectedAppointment = appointment;
@@ -430,10 +460,7 @@ class _CfCalendarState extends State<CfCalendar> {
 
     double dropOffset =
         CalendarViewHelper.getAppointmentPositionAtTimeSlotFromOffset(
-      details.offset,
-      scrollOffset,
-      totalExtraHeight,
-    );
+            details.offset, scrollOffset, totalExtraHeight);
     debugPrint("Exact dropOffset: $dropOffset");
 
     int indexOfDroppedAppointment = appointmentsList.indexOf(details.data);
@@ -477,7 +504,7 @@ class _CfCalendarState extends State<CfCalendar> {
     // debugPrint("DroppedIndex: $index");
 
     dynamic appointmentData = appointment.data;
-    int appointmentDuration = appointmentData.numberOfHours;
+    int appointmentDuration = appointmentData.jobDurationInHours;
 
     // #1: Update datetime value according to new positioned value
     DateTime droppedStartTime =
@@ -494,7 +521,7 @@ class _CfCalendarState extends State<CfCalendar> {
         CalendarViewHelper.isAppointmentDroppedOnAvailableArea(
             droppedStartTime, droppedEndTime);
 
-    debugPrint("isAreaAvailable: $isAreaAvailable");
+    // debugPrint("isAreaAvailable: $isAreaAvailable");
 
     if (isAreaAvailable) {
       appointmentsList[index] = appointmentsList[index]
@@ -505,8 +532,6 @@ class _CfCalendarState extends State<CfCalendar> {
 
       int slotCount = AppointmentHelper.calculateAppointmentSlotCountFromHour(
           appointmentDuration);
-
-      debugPrint("slotCount: $slotCount");
 
       double heightFromTop =
           CalendarViewHelper.getAppointmentPositionAtTimeSlotFromStartTime(
@@ -531,6 +556,12 @@ class _CfCalendarState extends State<CfCalendar> {
       /// if appointment is unSchedule and it's dropped on right timeSlot
       if (isUnscheduleAppointment) {
         unScheduleAppointment = null;
+      } else {
+        /// Trigger 'onJobScheduleChange' function if 'isAreaAvailable'
+        if (widget.onJobScheduleChange != null) {
+          debugPrint("widget.onJobScheduleChange");
+          widget.onJobScheduleChange!(appointmentData.id, droppedStartTime);
+        }
       }
     } else {
       /// If [isUnscheduleAppointment] then remove it from list in case slot is not available
@@ -544,180 +575,5 @@ class _CfCalendarState extends State<CfCalendar> {
     }
 
     setState(() {});
-  }
-}
-
-class TimeRulerView extends StatelessWidget {
-  const TimeRulerView({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final int timeInterval =
-        CalendarViewHelper.getTimeInterval(timeSlotViewSettings);
-    final timeSlotCount =
-        CalendarViewHelper.getTimeSlotCount(timeSlotViewSettings);
-
-    final timeTextStyle =
-        timeSlotViewSettings.timeTextStyle ?? CfCalendarStyle.timeTextStyle;
-
-    final double hour = (timeSlotViewSettings.startHour -
-            timeSlotViewSettings.startHour.toInt()) *
-        60;
-
-    var currentDate = now;
-
-    List<Widget> children = [];
-
-    for (int i = 0; i < timeSlotCount; i++) {
-      final double minute = (i * timeInterval) + hour;
-      // debugPrint("minute: $minute");
-      currentDate = DateTime(
-        currentDate.year,
-        currentDate.month,
-        currentDate.day,
-        timeSlotViewSettings.startHour.toInt(),
-        minute.toInt(),
-      );
-
-      // Check if currentDate is in AvailableTime or not
-      bool isInAvailableArea =
-          CalendarViewHelper.isTimeSlotInAvailableArea(currentDate);
-
-      // debugPrint("currentDate: $currentDate");
-
-      final String time =
-          DateFormat(timeSlotViewSettings.timeFormat).format(currentDate);
-      String anteMeridiem = DateFormat('a').format(currentDate);
-      // debugPrint("time: $time");
-      const fontSize = 12.0;
-      final Text textWidget = Text(
-        time,
-        style: timeTextStyle.copyWith(
-          color: isInAvailableArea ? timeTextColor : unAvailableTimeTextColor,
-          fontSize: fontSize,
-        ),
-      );
-      final anteMeridiemText = Text(
-        anteMeridiem,
-        style: timeTextStyle.copyWith(
-          color: isInAvailableArea ? timeTextColor : unAvailableTimeTextColor,
-          fontSize: fontSize,
-        ),
-      );
-      children.add(
-        SizedBox(
-          height: timeSlotViewSettings.timeIntervalHeight,
-          child: Column(
-            children: [
-              textWidget,
-              const SizedBox(height: 4),
-              anteMeridiemText,
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(children: children);
-  }
-}
-
-class TimeSlotView extends StatelessWidget {
-  final TimeSlotViewSettings timeSlotViewSetting;
-  const TimeSlotView({
-    this.timeSlotViewSetting = const TimeSlotViewSettings(),
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final timeSlotCount =
-        CalendarViewHelper.getTimeSlotCount(timeSlotViewSetting);
-
-    List<Widget> children = [];
-
-    for (int i = 0; i < timeSlotCount; i++) {
-      children.add(
-        Padding(
-          padding: EdgeInsets.only(top: timeSlotViewSetting.timeIntervalHeight),
-          child: const Divider(
-            height: 0,
-            color: timeSlotLineColor,
-            thickness: 1,
-          ),
-        ),
-      );
-    }
-
-    return Column(children: children);
-  }
-}
-
-//
-class UnScheduleJobView extends StatelessWidget {
-  final CalendarAppointment? unscheduleAppointmentObject;
-  final CalendarAppointment selectedAppointment;
-  final Widget Function(
-          BuildContext, CalendarAppointment, CalendarAppointment, Key?)
-      appointmentBuilder;
-  const UnScheduleJobView({
-    required this.unscheduleAppointmentObject,
-    required this.appointmentBuilder,
-    required this.selectedAppointment,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 1), // changes position of shadow
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('To Accept job drag it to desired time first '),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // GridView
-              SizedBox(
-                width: 16,
-                height: 50,
-                child: GridView.builder(
-                  itemCount: 6,
-                  padding: EdgeInsets.zero,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 5.6,
-                    crossAxisSpacing: 4.2,
-                  ),
-                  itemBuilder: (context, index) => Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-              // appointment view
-              appointmentBuilder(context, unscheduleAppointmentObject!,
-                  selectedAppointment, null),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
   }
 }

@@ -1,7 +1,8 @@
-import 'package:casa_flutter_calendar/src/common/appointment_helper.dart';
 import 'package:casa_flutter_calendar/src/common/constants.dart';
+import 'package:casa_flutter_calendar/src/common/date_extension.dart';
 import 'package:casa_flutter_calendar/src/settings/time_slot_view_setting.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class CalendarViewHelper {
   static double getTimeSlotCount(TimeSlotViewSettings settings) {
@@ -129,6 +130,34 @@ class CalendarViewHelper {
     } else {
       return false;
     }
+  }
+
+  static String getAvailabilityTimeOfDay(
+      dynamic availabilityList, DateTime dateTime) {
+    String selectedDay = dateTime.weekdayName()!;
+    debugPrint("selectedDay: " + selectedDay);
+    debugPrint("availabilityList: $availabilityList");
+    debugPrint("dateTime: $dateTime");
+
+    for (var availability in availabilityList) {
+      // debugPrint("availability: $availability");
+      if (availability.days.contains(selectedDay)) {
+        TimeOfDay startTime = availability.fromTime;
+        TimeOfDay toTime = availability.toTime;
+        DateTime startDate = DateTime(dateTime.year, dateTime.month,
+            dateTime.day, startTime.hour, startTime.minute);
+        DateTime endDate = DateTime(dateTime.year, dateTime.month, dateTime.day,
+            toTime.hour, toTime.minute);
+        String startTimeFormat = DateFormat("hh:mm a").format(startDate);
+        String endTimeFormat = DateFormat("hh:mm a").format(endDate);
+        debugPrint("TimeOfJob: " + '$startTimeFormat - $endTimeFormat');
+        return '$startTimeFormat - $endTimeFormat';
+      }
+    }
+
+    debugPrint("TimeOfJob: ");
+
+    return '';
   }
 }
 

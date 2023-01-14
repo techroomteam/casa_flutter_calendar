@@ -45,10 +45,10 @@ class _CasaFlutterCalendarExampleState
   DateTime? availableStartTime;
   DateTime? availableEndTime;
   // selected job
-  final unscheduleJob = const Job(
+  late var unscheduleJob = Job(
     id: 'Ticket 900',
     description: 'Washing machine not starting',
-    numberOfHours: 2,
+    jobDurationInHours: 2,
     availabilityList: [
       const AvailabilityTime(
         days: ['Mon'],
@@ -63,6 +63,9 @@ class _CasaFlutterCalendarExampleState
         toTime: CasaTimeOfDay(hour: 17, minute: 0),
       ),
     ],
+    // freelancerActivity: JobFreelancerActivity(
+    //   scheduleJobTime: DateTime(now.year, now.month, now.day, 12),
+    // ),
   );
   //
   late CalendarAppointment unScheduleAppointment =
@@ -73,8 +76,8 @@ class _CasaFlutterCalendarExampleState
     Job(
       id: 'Ticket 786',
       description: 'Washing machine not starting',
-      numberOfHours: 2,
-      startTime: DateTime(now.year, now.month, now.day, 13),
+      jobDurationInHours: 2,
+      startTime: DateTime(now.year, now.month, now.day, 1),
       availabilityList: const [
         AvailabilityTime(
           days: ['Tue'],
@@ -89,11 +92,13 @@ class _CasaFlutterCalendarExampleState
           toTime: CasaTimeOfDay(hour: 12, minute: 0),
         ),
       ],
+      freelancerActivity: JobFreelancerActivity(
+          scheduleJobTime: DateTime(now.year, now.month, now.day, 1)),
     ),
     Job(
       id: 'Ticket 800',
       description: 'Washing machine not starting',
-      numberOfHours: 3,
+      jobDurationInHours: 3,
       startTime: DateTime(now.year, now.month, now.day, 17),
       availabilityList: const [
         AvailabilityTime(
@@ -109,6 +114,8 @@ class _CasaFlutterCalendarExampleState
           toTime: CasaTimeOfDay(hour: 23, minute: 0),
         ),
       ],
+      freelancerActivity: JobFreelancerActivity(
+          scheduleJobTime: DateTime(now.year, now.month, now.day, 12)),
     ),
   ];
 
@@ -154,8 +161,12 @@ class _CasaFlutterCalendarExampleState
         //   },
         // ),
         // ],
-        onAccept: (appointmentList) {
-          debugPrint("appointmentList: $appointmentList");
+        onAccept: (acceptedAppointment, scheduleDate) {
+          debugPrint("onAccept");
+        },
+        onJobScheduleChange: (jobID, newScheduleTime) {
+          debugPrint("JOBID: $jobID");
+          debugPrint("newScheduleTime: $newScheduleTime");
         },
       ),
     );
@@ -216,7 +227,7 @@ class MeetingDataSource extends CalendarDataSource {
     if (date == null) {
       return now;
     } else {
-      final numOfHour = _getMeetingData(index).numberOfHours;
+      final numOfHour = _getMeetingData(index).jobDurationInHours;
       return DateTime(date.year, date.month, date.day, date.hour + numOfHour);
     }
   }

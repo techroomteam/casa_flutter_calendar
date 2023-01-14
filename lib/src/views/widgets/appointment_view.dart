@@ -1,3 +1,5 @@
+import 'package:casa_flutter_calendar/src/common/calendar_view_helper.dart';
+import 'package:casa_flutter_calendar/src/common/constants.dart';
 import 'package:casa_flutter_calendar/src/common/style.dart';
 import 'package:flutter/material.dart';
 
@@ -28,109 +30,115 @@ class AppointmentView extends StatelessWidget {
       child: Padding(
         key: key,
         padding: EdgeInsets.all(padding),
-        child: Container(
-          height: height,
-          padding: const EdgeInsets.only(left: 10, top: 14, right: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: color,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  color: Colors.redAccent,
-                ),
+        child: Stack(
+          children: [
+            Container(
+              height: height,
+              width: MediaQuery.of(context).size.width / 1.18,
+              padding: const EdgeInsets.only(left: 10, top: 14, right: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: color,
               ),
-              // Sized Box...
-              const SizedBox(width: 10.0),
-              Column(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width / 1.5,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
+                  Image.asset(
+                    jobInfo?.issue?.image ?? electricApplianceAsset,
+                    width: 32,
+                    height: 32,
+                  ),
+
+                  // Sized Box...
+                  const SizedBox(width: 10.0),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 100,
+                        // width: MediaQuery.of(context).size.width / 1.5,
+                        child: Text(
                           jobInfo.id ?? '',
                           style: CfCalendarStyle.bodyText3.copyWith(
                             fontWeight: FontWeight.w600,
                             color: textColor,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        // const Spacer(),
-                        // // Sized Box...
-                        // const SizedBox(width: 140),
-                        // Time Container...
-                        Row(
-                          // mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: blackAccent3,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '7am-12pm',
-                                style: CfCalendarStyle.bodyText5.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: blackAccent1,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                            // Sized Box...
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: appAmountColor,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '\$1400',
-                                style: CfCalendarStyle.bodyText5.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: blackAccent1,
-                                  fontSize: 10.0,
-                                ),
-                              ),
-                            ),
-
-                            // Sized Box...
-                            const SizedBox(width: 8),
-                          ],
+                      ),
+                      // const SizedBox(height: 8.0),
+                      Text(
+                        jobInfo?.issue?.name ?? '',
+                        style: CfCalendarStyle.bodyText2.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
                         ),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        jobInfo.unitAddress ?? '',
+                        style: CfCalendarStyle.bodyText3.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: textColor,
+                        ),
+                      )
+                    ],
                   ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    jobInfo.description ?? '',
-                    style: CfCalendarStyle.bodyText2.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
-                  ),
-                  Text(
-                    jobInfo.unitAddress ?? '',
-                    style: CfCalendarStyle.bodyText3.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
-                    ),
-                  )
                 ],
-              )
-            ],
-          ),
+              ),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  jobInfo?.freelancerActivity?.scheduleJobTime == null
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: blackAccent3,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              CalendarViewHelper.getAvailabilityTimeOfDay(
+                                  jobInfo.availabilityList,
+                                  jobInfo?.freelancerActivity?.scheduleJobTime),
+                              style: CfCalendarStyle.bodyText5.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: blackAccent1,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                  // Sized Box...
+                  const SizedBox(width: 8),
+                  jobInfo.jobWage == null
+                      ? const SizedBox.shrink()
+                      : Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: appAmountColor,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '\$${jobInfo.jobWage}',
+                            style: CfCalendarStyle.bodyText5.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: blackAccent1,
+                              fontSize: 10.0,
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
