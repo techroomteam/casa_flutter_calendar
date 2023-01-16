@@ -22,12 +22,12 @@ class NotificationCounterView extends StatelessWidget {
           borderRadius: BorderRadius.circular(9),
         ),
         child: Container(
-          // padding: const EdgeInsets.all(1).r,
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(9),
           ),
-          constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+          // constraints: const BoxConstraints(minWidth: 21, minHeight: 20),
           child: Text(
             '$count',
             style: TextStyle(

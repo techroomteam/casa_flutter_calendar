@@ -88,13 +88,6 @@ class _CfCalendarState extends State<CfCalendar> {
     totalExtraHeight = headerHeight + extraHeight;
     // update [timeSlotViewSettings] in constant file
     timeSlotViewSettings = widget.timeSlotViewSetting;
-    // // update the [timeSlotViewSetting.timeIntervalHeight] according to timeInterval
-    // debugPrint(
-    //     "timeSlotViewSettings.timeInterval.inMinutes: ${timeSlotViewSettings.timeInterval.inMinutes}");
-    // timeSlotViewSettings = timeSlotViewSettings.copyWith(
-    //   timeIntervalHeight: timeSlotViewSettings.timeIntervalHeight *
-    //       (60 / timeSlotViewSettings.timeInterval.inMinutes),
-    // );
 
     //
     initAppointmentList(widget.dataSource);
@@ -106,6 +99,7 @@ class _CfCalendarState extends State<CfCalendar> {
     Future.delayed(const Duration(milliseconds: 400), () {
       debugPrint("InitState check Availablility");
       checkSelectedAppointmentAvailability(unScheduleAppointment);
+      scrollToFirstAvailableOffset();
       setState(() {});
     });
 
@@ -123,6 +117,48 @@ class _CfCalendarState extends State<CfCalendar> {
     super.dispose();
   }
 
+  void scrollToFirstAvailableOffset() {
+    debugPrint("appointmentsList length: ${appointmentsList.length}");
+    // CalendarAppointment appointment = appointmentsList.firstWhere(
+    //     (app) => app.startTime!.compareTo(activeDate) == 1,
+    //     orElse: () => CalendarAppointment());
+
+    // if (appointment.id != null) {
+    //   debugPrint("appointmentID: ${appointment.id}");
+    //   scrollController.jumpTo(appointment.appointmentRect!.top);
+    // }
+
+    /// if schedule new job screen then get availability of unschedule job
+
+    if (selectedAppointment != null) {
+      // debugPrint("appointmentID: ${appointment.id}");
+      // scrollController.jumpTo(appointment.appointmentRect!.top);
+
+      DateTime? availabilityStartTime;
+
+      String selectedDay = activeDate.weekdayName()!;
+      dynamic appointmentObject = selectedAppointment!.data;
+
+      for (var availability in appointmentObject.availabilityList) {
+        if (availability.days.contains(selectedDay)) {
+          availabilityStartTime = DateTime(activeDate.year, activeDate.month,
+              activeDate.day, availability.fromTime.hour);
+          break;
+        }
+      }
+
+      if (availabilityStartTime != null) {
+        double topOffset =
+            CalendarViewHelper.getAppointmentPositionAtTimeSlotFromStartTime(
+                availabilityStartTime, timeSlotViewSettings.timeIntervalHeight);
+
+        scrollController.jumpTo(topOffset);
+      } else {
+        scrollController.jumpTo(0);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     appointmentsWidgetList = getListOfAppointmentWidgets();
@@ -134,12 +170,9 @@ class _CfCalendarState extends State<CfCalendar> {
           SizedBox(
             height: MediaQuery.of(context).size.height,
             child: Column(
-              // physics: const NeverScrollableScrollPhysics(),
-              // shrinkWrap: true,
               children: [
                 CalendarDaysListView(
                   daysHeaderViewSetting: widget.daysHeaderViewSetting,
-                  // onNewSelection: widget.onViewChanged,
                   onNewSelection: (newDate) {
                     // #1: Update activeDate value
                     activeDate = newDate;
@@ -158,7 +191,11 @@ class _CfCalendarState extends State<CfCalendar> {
 
                     // recheck the availablility
                     checkSelectedAppointmentAvailability(selectedAppointment);
+
+                    // scroll to first available slot offset
+                    scrollToFirstAvailableOffset();
                   },
+                  appointmentsList: appointmentsList,
                   activeDate: activeDate,
                 ),
 
@@ -346,10 +383,7 @@ class _CfCalendarState extends State<CfCalendar> {
               top: appointment.appointmentRect!.top,
               left: 0,
               right: 0,
-              child:
-                  // widget.appointmentBuilder != null
-                  //     ?
-                  LongPressDraggable<CalendarAppointment>(
+              child: LongPressDraggable<CalendarAppointment>(
                 axis: Axis.vertical,
                 data: appointment,
                 maxSimultaneousDrags: widget.isDragAllowed ? 1 : 0,
@@ -370,9 +404,7 @@ class _CfCalendarState extends State<CfCalendar> {
                 feedback: feedbackAppointmentBuilder(appointment),
                 childWhenDragging: const SizedBox.shrink(),
                 child: appointmentBuilder(appointment),
-              )
-              // : defaultAppointmentView(),
-              ),
+              )),
         );
       }
     }
@@ -543,13 +575,6 @@ class _CfCalendarState extends State<CfCalendar> {
 
       final rRect =
           RRect.fromLTRBAndCorners(0, heightFromTop, 0, appRectBottom);
-
-      // double appRectBottom =
-      //     dropOffset + timeIntervalHeight * appointmentDuration;
-
-      // final rRect = RRect.fromLTRBAndCorners(0, dropOffset, 0, appRectBottom);
-      // // update RRect value in droppedAppointment
-      // droppedAppointment = droppedAppointment.copyWith(rRect: rRect);
 
       appointmentsList[index].appointmentRect = rRect;
 

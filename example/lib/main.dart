@@ -59,7 +59,7 @@ class _CasaFlutterCalendarExampleState
       const AvailabilityTime(
         days: ['Tue', 'Thu'],
         dayAvailability: DayAvailability.noon,
-        fromTime: CasaTimeOfDay(hour: 0, minute: 0),
+        fromTime: CasaTimeOfDay(hour: 7, minute: 0),
         toTime: CasaTimeOfDay(hour: 17, minute: 0),
       ),
     ],
@@ -77,7 +77,7 @@ class _CasaFlutterCalendarExampleState
       id: 'Ticket 786',
       description: 'Washing machine not starting',
       jobDurationInHours: 2,
-      startTime: DateTime(now.year, now.month, now.day, 1),
+      startTime: DateTime(now.year, now.month, now.day + 1, 1),
       availabilityList: const [
         AvailabilityTime(
           days: ['Tue'],
@@ -88,12 +88,12 @@ class _CasaFlutterCalendarExampleState
         AvailabilityTime(
           days: ['Wed', 'Thu'],
           dayAvailability: DayAvailability.morning,
-          fromTime: CasaTimeOfDay(hour: 0, minute: 0),
+          fromTime: CasaTimeOfDay(hour: 4, minute: 0),
           toTime: CasaTimeOfDay(hour: 12, minute: 0),
         ),
       ],
       freelancerActivity: JobFreelancerActivity(
-          scheduleJobTime: DateTime(now.year, now.month, now.day, 1)),
+          scheduleJobTime: DateTime(now.year, now.month, now.day + 1, 1)),
     ),
     Job(
       id: 'Ticket 800',
@@ -139,7 +139,8 @@ class _CasaFlutterCalendarExampleState
           timeInterval: const Duration(minutes: 30),
           timeFormat: 'hh:mm',
         ),
-        daysHeaderViewSetting: DaysHeaderViewSetting(extraHeight: extraHeight),
+        daysHeaderViewSetting: DaysHeaderViewSetting(
+            extraHeight: extraHeight, showNotificationCounter: true),
         dataSource: MeetingDataSource(_getDataSource()),
         unScheduleAppointment: unScheduleAppointment,
         activeDate: activeDate,

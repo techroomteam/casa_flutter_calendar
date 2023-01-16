@@ -1,5 +1,6 @@
+import 'package:casa_flutter_calendar/casa_flutter_calendar.dart';
 import 'package:casa_flutter_calendar/src/common/constants.dart';
-import 'package:casa_flutter_calendar/src/settings/days_header_view_setting.dart';
+import 'package:casa_flutter_calendar/src/common/date_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -8,11 +9,13 @@ import 'notification_counter_view.dart';
 class CalendarDaysListView extends StatelessWidget {
   final DaysHeaderViewSetting daysHeaderViewSetting;
   final Function(DateTime)? onNewSelection;
-  final DateTime? activeDate;
+  final DateTime activeDate;
+  final List<CalendarAppointment> appointmentsList;
   const CalendarDaysListView({
     required this.daysHeaderViewSetting,
     required this.onNewSelection,
-    this.activeDate,
+    required this.activeDate,
+    this.appointmentsList = const [],
     Key? key,
   }) : super(key: key);
 
@@ -26,16 +29,20 @@ class CalendarDaysListView extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           itemCount: daysHeaderViewSetting.numberOfDays,
           itemBuilder: (BuildContext context, int index) {
+            final date = DateTime(now.year, now.month, now.day + index);
             return Padding(
               padding: const EdgeInsets.only(left: 12),
               child: WeekDayItemView(
-                activeViewDate: activeDate != null
-                    ? DateTime(
-                        activeDate!.year, activeDate!.month, activeDate!.day)
-                    : DateTime(now.year, now.month, now.day),
-                dateTime: DateTime(now.year, now.month, now.day + index),
+                activeViewDate: activeDate.dateToYMDTime(),
+                // activeDate != null ?
+                // DateTime(
+                //     activeDate!.year, activeDate!.month, activeDate!.day),
+                // : DateTime(now.year, now.month, now.day),
+                dateTime: date,
                 availableDaysList: daysHeaderViewSetting.activeDaysList,
                 daysHeaderViewSetting: daysHeaderViewSetting,
+                jobCount: getAppointmentCountFromAppointmentList(
+                    appointmentsList, date),
                 onTap: onNewSelection,
               ),
             );
@@ -49,6 +56,7 @@ class CalendarDaysListView extends StatelessWidget {
 class WeekDayItemView extends StatelessWidget {
   final DateTime activeViewDate;
   final DateTime dateTime;
+  final int jobCount;
   final List<String> availableDaysList;
   final DaysHeaderViewSetting daysHeaderViewSetting;
   final Function(DateTime)? onTap;
@@ -57,6 +65,7 @@ class WeekDayItemView extends StatelessWidget {
     required this.dateTime,
     required this.availableDaysList,
     required this.daysHeaderViewSetting,
+    this.jobCount = 0,
     this.onTap,
     super.key,
   });
@@ -70,7 +79,7 @@ class WeekDayItemView extends StatelessWidget {
     final decoration = BoxDecoration(
       color: isCurrentDay
           ? daysHeaderViewSetting.activeDayColor
-          : const Color(0xffF2F3F8),
+          : daysHeaderViewSetting.inActiveDayColor,
       borderRadius: BorderRadius.circular(12),
     );
 
@@ -94,7 +103,7 @@ class WeekDayItemView extends StatelessWidget {
           children: [
             Container(
               height: 80,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: decoration,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -103,10 +112,15 @@ class WeekDayItemView extends StatelessWidget {
                     DateFormat('EEE').format(dateTime),
                     style: textStyle,
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     DateFormat('MMM').format(dateTime),
-                    style: textStyle,
+                    style: textStyle.copyWith(
+                      color:
+                          isCurrentDay ? Colors.white : const Color(0xff757A8A),
+                    ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     dateTime.day.toString(),
                     style: textStyle.copyWith(
@@ -119,14 +133,15 @@ class WeekDayItemView extends StatelessWidget {
               ),
             ),
             Visibility(
-              visible: daysHeaderViewSetting.showNotificationCounter,
+              visible:
+                  daysHeaderViewSetting.showNotificationCounter && jobCount > 0,
               child: Positioned(
                 right: 0,
                 child: NotificationCounterView(
-                  count: 5,
+                  count: jobCount,
                   backgroundColor: isCurrentDay
                       ? daysHeaderViewSetting.activeDayColor
-                      : daysHeaderViewSetting.inActiveDayColor,
+                      : const Color(0xffD2D5DF),
                 ),
               ),
             )
@@ -135,4 +150,18 @@ class WeekDayItemView extends StatelessWidget {
       ),
     );
   }
+}
+
+int getAppointmentCountFromAppointmentList(
+    List<CalendarAppointment> appointmentList, DateTime activeDate) {
+  final appList = appointmentList.where((app) {
+    debugPrint("startTime: ${app.startTime?.dateToYMDTime()}");
+    debugPrint("activeDate: ${activeDate.dateToYMDTime()}");
+    final appTime = app.startTime?.dateToYMDTime();
+    final activeTime = activeDate.dateToYMDTime();
+    return appTime!.isAtSameMomentAs(activeTime);
+  });
+
+  debugPrint('appLIst length: ${appList.length}');
+  return appList.length;
 }

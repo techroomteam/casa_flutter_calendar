@@ -39,7 +39,7 @@ class DaysHeaderViewSetting {
     this.extraHeight = 0.0,
     this.showNotificationCounter = false,
     this.activeDayColor = const Color(0xff7B4CEB),
-    this.inActiveDayColor = const Color(0xff3C4549),
+    this.inActiveDayColor = const Color(0xffF2F3F8),
     this.activeViewTextColor = const Color(0xffFFFFFF),
     this.inActiveViewTextColor = const Color(0xff3C4549),
     this.disableDayViewTextColor = const Color(0xffD2D5DF),
