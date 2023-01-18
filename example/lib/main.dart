@@ -169,6 +169,7 @@ class _CasaFlutterCalendarExampleState
           debugPrint("JOBID: $jobID");
           debugPrint("newScheduleTime: $newScheduleTime");
         },
+        onAppointmentTap: (jobID) {},
       ),
     );
   }

@@ -19,13 +19,15 @@ class NotificationCounterView extends StatelessWidget {
         padding: const EdgeInsets.all(1),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(9),
+          // borderRadius: BorderRadius.circular(9),
+          shape: BoxShape.circle,
         ),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(9),
+            // borderRadius: BorderRadius.circular(9),
+            shape: BoxShape.circle,
           ),
           // constraints: const BoxConstraints(minWidth: 21, minHeight: 20),
           child: Text(

@@ -135,9 +135,9 @@ class CalendarViewHelper {
   static String getAvailabilityTimeOfDay(
       dynamic availabilityList, DateTime dateTime) {
     String selectedDay = dateTime.weekdayName()!;
-    debugPrint("selectedDay: " + selectedDay);
-    debugPrint("availabilityList: $availabilityList");
-    debugPrint("dateTime: $dateTime");
+    // debugPrint("selectedDay: " + selectedDay);
+    // debugPrint("availabilityList: $availabilityList");
+    // debugPrint("dateTime: $dateTime");
 
     for (var availability in availabilityList) {
       // debugPrint("availability: $availability");
@@ -150,12 +150,12 @@ class CalendarViewHelper {
             toTime.hour, toTime.minute);
         String startTimeFormat = DateFormat("hh:mm a").format(startDate);
         String endTimeFormat = DateFormat("hh:mm a").format(endDate);
-        debugPrint("TimeOfJob: " + '$startTimeFormat - $endTimeFormat');
+        // debugPrint("TimeOfJob: " + '$startTimeFormat - $endTimeFormat');
         return '$startTimeFormat - $endTimeFormat';
       }
     }
 
-    debugPrint("TimeOfJob: ");
+    // debugPrint("TimeOfJob: ");
 
     return '';
   }

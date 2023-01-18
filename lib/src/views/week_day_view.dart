@@ -102,7 +102,7 @@ class WeekDayItemView extends StatelessWidget {
         child: Stack(
           children: [
             Container(
-              height: 80,
+              height: 88,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: decoration,
               child: Column(
@@ -116,8 +116,11 @@ class WeekDayItemView extends StatelessWidget {
                   Text(
                     DateFormat('MMM').format(dateTime),
                     style: textStyle.copyWith(
-                      color:
-                          isCurrentDay ? Colors.white : const Color(0xff757A8A),
+                      color: isCurrentDay
+                          ? Colors.white
+                          : isDayAvailable
+                              ? const Color(0xff757A8A)
+                              : daysHeaderViewSetting.disableDayViewTextColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -155,13 +158,13 @@ class WeekDayItemView extends StatelessWidget {
 int getAppointmentCountFromAppointmentList(
     List<CalendarAppointment> appointmentList, DateTime activeDate) {
   final appList = appointmentList.where((app) {
-    debugPrint("startTime: ${app.startTime?.dateToYMDTime()}");
-    debugPrint("activeDate: ${activeDate.dateToYMDTime()}");
+    // debugPrint("startTime: ${app.startTime?.dateToYMDTime()}");
+    // debugPrint("activeDate: ${activeDate.dateToYMDTime()}");
     final appTime = app.startTime?.dateToYMDTime();
     final activeTime = activeDate.dateToYMDTime();
     return appTime!.isAtSameMomentAs(activeTime);
   });
 
-  debugPrint('appLIst length: ${appList.length}');
+  // debugPrint('appLIst length: ${appList.length}');
   return appList.length;
 }

@@ -38,6 +38,7 @@ class CfCalendar extends StatefulWidget {
   final void Function(String jobID, DateTime newScheduleTime)?
       onJobScheduleChange;
   final void Function(CalendarAppointment, DateTime) onAccept;
+  final Function(dynamic data) onAppointmentTap;
 
   const CfCalendar({
     required this.dataSource,
@@ -51,6 +52,7 @@ class CfCalendar extends StatefulWidget {
     this.onJobScheduleChange,
     this.onViewChanged,
     required this.onAccept,
+    required this.onAppointmentTap,
     Key? key,
   }) : super(key: key);
 
@@ -119,14 +121,6 @@ class _CfCalendarState extends State<CfCalendar> {
 
   void scrollToFirstAvailableOffset() {
     debugPrint("appointmentsList length: ${appointmentsList.length}");
-    // CalendarAppointment appointment = appointmentsList.firstWhere(
-    //     (app) => app.startTime!.compareTo(activeDate) == 1,
-    //     orElse: () => CalendarAppointment());
-
-    // if (appointment.id != null) {
-    //   debugPrint("appointmentID: ${appointment.id}");
-    //   scrollController.jumpTo(appointment.appointmentRect!.top);
-    // }
 
     /// if schedule new job screen then get availability of unschedule job
 
@@ -155,6 +149,16 @@ class _CfCalendarState extends State<CfCalendar> {
         scrollController.jumpTo(topOffset);
       } else {
         scrollController.jumpTo(0);
+      }
+    } else {
+      /// if no selectedJob then scroll to first appointment offset
+      CalendarAppointment appointment = appointmentsList.firstWhere(
+          (app) => app.startTime!.compareTo(activeDate) == 1,
+          orElse: () => CalendarAppointment());
+
+      if (appointment.id != null) {
+        debugPrint("appointmentID: ${appointment.id}");
+        scrollController.jumpTo(appointment.appointmentRect!.top);
       }
     }
   }
@@ -346,17 +350,20 @@ class _CfCalendarState extends State<CfCalendar> {
     double appointmentHeight =
         AppointmentHelper.appointmentHeightFromNumberOfHour(numberOfHours);
 
+    dynamic data = appointment.data;
+
     return AppointmentView(
       height: customHeight ?? appointmentHeight,
-      jobInfo: appointment.data,
+      jobInfo: data,
       color: isSelectedJob ? selectedAppointmentColor : appBackgroundColor,
       textColor: isSelectedJob ? Colors.white : blackAccent1,
-      onTap: () {
-        // #1: Change [selectedAppointment] data
-        selectedAppointment = appointment;
-        // #2: Change availablity slots
-        checkSelectedAppointmentAvailability(appointment);
-      },
+      onTap: () => widget.onAppointmentTap(data),
+      // onTap: () {
+      //   // #1: Change [selectedAppointment] data
+      //   selectedAppointment = appointment;
+      //   // #2: Change availablity slots
+      //   checkSelectedAppointmentAvailability(appointment);
+      // },
     );
   }
 
@@ -421,8 +428,8 @@ class _CfCalendarState extends State<CfCalendar> {
       dynamic appointmentObject = appointment.data;
       bool isAvailable = false;
 
-      debugPrint("selectedDay: $selectedDay");
-      debugPrint("availabilityList: ${appointmentObject.availabilityList}");
+      // debugPrint("selectedDay: $selectedDay");
+      // debugPrint("availabilityList: ${appointmentObject.availabilityList}");
 
       for (var availability in appointmentObject.availabilityList) {
         if (availability.days.contains(selectedDay)) {
@@ -437,7 +444,7 @@ class _CfCalendarState extends State<CfCalendar> {
         }
       }
 
-      debugPrint("isAvailable: $isAvailable");
+      // debugPrint("isAvailable: $isAvailable");
 
       if (!isAvailable) {
         timeSlotViewSettings = timeSlotViewSettings.copyWith(
@@ -583,7 +590,8 @@ class _CfCalendarState extends State<CfCalendar> {
         unScheduleAppointment = null;
       } else {
         /// Trigger 'onJobScheduleChange' function if 'isAreaAvailable'
-        if (widget.onJobScheduleChange != null) {
+        if (widget.onJobScheduleChange != null &&
+            selectedAppointment!.id != widget.unScheduleAppointment!.id) {
           debugPrint("widget.onJobScheduleChange");
           widget.onJobScheduleChange!(appointmentData.id, droppedStartTime);
         }
