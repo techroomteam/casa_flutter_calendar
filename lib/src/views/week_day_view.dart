@@ -26,6 +26,7 @@ class CalendarDaysListView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(right: 12),
         child: ListView.builder(
+          controller: ScrollController(keepScrollOffset: false),
           scrollDirection: Axis.horizontal,
           itemCount: daysHeaderViewSetting.numberOfDays,
           itemBuilder: (BuildContext context, int index) {

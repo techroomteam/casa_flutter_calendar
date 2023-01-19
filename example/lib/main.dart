@@ -142,7 +142,7 @@ class _CasaFlutterCalendarExampleState
         daysHeaderViewSetting: DaysHeaderViewSetting(
             extraHeight: extraHeight, showNotificationCounter: true),
         dataSource: MeetingDataSource(_getDataSource()),
-        unScheduleAppointment: unScheduleAppointment,
+        // unScheduleAppointment: unScheduleAppointment,
         activeDate: activeDate,
         //   appointmentBuilder:
         //       (context, appointment, selectedAppointment, key) {

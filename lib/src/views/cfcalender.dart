@@ -152,12 +152,19 @@ class _CfCalendarState extends State<CfCalendar> {
       }
     } else {
       /// if no selectedJob then scroll to first appointment offset
-      CalendarAppointment appointment = appointmentsList.firstWhere(
-          (app) => app.startTime!.compareTo(activeDate) == 1,
-          orElse: () => CalendarAppointment());
+
+      CalendarAppointment appointment = appointmentsList.firstWhere((app) {
+        debugPrint("appID: ${app.id}");
+        debugPrint("app.startTime: ${app.startTime!.dateToYMDTime()}");
+        debugPrint("activeDate: ${activeDate.dateToYMDTime()}");
+        return app.startTime!
+            .dateToYMDTime()
+            .isAtSameMomentAs(activeDate.dateToYMDTime());
+      }, orElse: () => CalendarAppointment());
 
       if (appointment.id != null) {
         debugPrint("appointmentID: ${appointment.id}");
+        debugPrint("appointmentRect: ${appointment.appointmentRect!.top}");
         scrollController.jumpTo(appointment.appointmentRect!.top);
       }
     }
@@ -591,8 +598,13 @@ class _CfCalendarState extends State<CfCalendar> {
       } else {
         /// Trigger 'onJobScheduleChange' function if 'isAreaAvailable'
         if (widget.onJobScheduleChange != null &&
+            (widget.unScheduleAppointment == null ||
+                selectedAppointment == null)) {
+          // debugPrint("appointmentData.id: ${appointmentData}");
+          // debugPrint("droppedStartTime: ${droppedStartTime}");
+          widget.onJobScheduleChange!(appointmentData.id, droppedStartTime);
+        } else if (widget.onJobScheduleChange != null &&
             selectedAppointment!.id != widget.unScheduleAppointment!.id) {
-          debugPrint("widget.onJobScheduleChange");
           widget.onJobScheduleChange!(appointmentData.id, droppedStartTime);
         }
       }
