@@ -3,6 +3,52 @@ import 'package:casa_flutter_calendar/src/common/constants.dart';
 import 'package:casa_flutter_calendar/src/common/style.dart';
 import 'package:flutter/material.dart';
 
+// class Job {
+//   final String id;
+//   final AppUser createdBy;
+//   final DateTime createdAt;
+//   final CasaIssue issue;
+//   final String description;
+//   final double? jobWage;
+
+//   // enum
+//   final JobStatus status;
+//   final List<CasaAttachment> attachments;
+//   final String? voiceNote;
+//   // final String? unitAddress;
+
+//   // enum
+//   final JobType type;
+//   final int? jobDurationInHours;
+//   final bool residentWillResolveWorkHimSelf;
+
+//   // enum
+//   final UserRole? jobRequiredSkill;
+
+//   // availablity list of renter, freelancer need to choose time from this list
+//   final List<AvailabilityTime>? availabilityList;
+//   final Meeting? meetingActivity;
+//   final List<JobActivity> activities;
+
+//   ///
+//   final OnTheWay? lastOnTheWayActivity;
+
+//   /// this parameter will hold freelancer, renter, expert feedback
+//   final JobFeedback? feedback;
+
+//   /// this map will hold, assigned freelanceer and it's assinged date
+//   final AssignedTechnician? assignedTechnician;
+
+//   /// Property
+//   final Property property;
+
+//   /// Job Tool List
+//   final List<JobTool>? jobToolsList;
+
+//   /// Required Technician Level List...
+//   final List<String>? requiredTechnicianLevel;
+// }
+
 class AppointmentView extends StatelessWidget {
   final jobInfo;
   final double height;
@@ -44,7 +90,7 @@ class AppointmentView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.asset(
-                    jobInfo?.issue?.image ?? electricApplianceAsset,
+                    jobInfo.issue?.image ?? electricApplianceAsset,
                     width: 32,
                     height: 32,
                   ),
@@ -58,7 +104,7 @@ class AppointmentView extends StatelessWidget {
                         width: 100,
                         // width: MediaQuery.of(context).size.width / 1.5,
                         child: Text(
-                          jobInfo.id ?? '',
+                          jobInfo.id,
                           style: CfCalendarStyle.bodyText3.copyWith(
                             fontWeight: FontWeight.w600,
                             color: textColor,
@@ -68,14 +114,14 @@ class AppointmentView extends StatelessWidget {
                       ),
                       // const SizedBox(height: 8.0),
                       Text(
-                        jobInfo?.issue?.name ?? '',
+                        jobInfo.issue?.name ?? '',
                         style: CfCalendarStyle.bodyText2.copyWith(
                           fontWeight: FontWeight.w600,
                           color: textColor,
                         ),
                       ),
                       Text(
-                        jobInfo.unitAddress ?? '',
+                        jobInfo.property.address.addressString,
                         style: CfCalendarStyle.bodyText3.copyWith(
                           fontWeight: FontWeight.w500,
                           color: textColor,
@@ -92,7 +138,7 @@ class AppointmentView extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  jobInfo?.freelancerActivity?.scheduleJobTime == null
+                  jobInfo.assignedTechnician == null
                       ? const SizedBox.shrink()
                       : Padding(
                           padding: const EdgeInsets.only(left: 8.0),
@@ -106,7 +152,7 @@ class AppointmentView extends StatelessWidget {
                             child: Text(
                               CalendarViewHelper.getAvailabilityTimeOfDay(
                                   jobInfo.availabilityList,
-                                  jobInfo?.freelancerActivity?.scheduleJobTime),
+                                  jobInfo.assignedTechnician?.scheduleTime),
                               style: CfCalendarStyle.bodyText5.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: blackAccent1,
