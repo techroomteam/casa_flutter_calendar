@@ -23,6 +23,7 @@ class CfCalendar extends StatefulWidget {
   final CalendarAppointment? unScheduleAppointment;
 
   final DateTime activeDate;
+
   final TimeSlotViewSettings timeSlotViewSetting;
   final DaysHeaderViewSetting daysHeaderViewSetting;
 
@@ -120,7 +121,7 @@ class _CfCalendarState extends State<CfCalendar> {
   }
 
   void scrollToFirstAvailableOffset() {
-    debugPrint("appointmentsList length: ${appointmentsList.length}");
+    // debugPrint("appointmentsList length: ${appointmentsList.length}");
 
     /// if schedule new job screen then get availability of unschedule job
 
@@ -154,17 +155,17 @@ class _CfCalendarState extends State<CfCalendar> {
       /// if no selectedJob then scroll to first appointment offset
 
       CalendarAppointment appointment = appointmentsList.firstWhere((app) {
-        debugPrint("appID: ${app.id}");
-        debugPrint("app.startTime: ${app.startTime!.dateToYMDTime()}");
-        debugPrint("activeDate: ${activeDate.dateToYMDTime()}");
+        // debugPrint("appID: ${app.id}");
+        // debugPrint("app.startTime: ${app.startTime!.dateToYMDTime()}");
+        // debugPrint("activeDate: ${activeDate.dateToYMDTime()}");
         return app.startTime!
             .dateToYMDTime()
             .isAtSameMomentAs(activeDate.dateToYMDTime());
       }, orElse: () => CalendarAppointment());
 
       if (appointment.id != null) {
-        debugPrint("appointmentID: ${appointment.id}");
-        debugPrint("appointmentRect: ${appointment.appointmentRect!.top}");
+        // debugPrint("appointmentID: ${appointment.id}");
+        // debugPrint("appointmentRect: ${appointment.appointmentRect!.top}");
         scrollController.jumpTo(appointment.appointmentRect!.top);
       }
     }
@@ -187,6 +188,10 @@ class _CfCalendarState extends State<CfCalendar> {
                   onNewSelection: (newDate) {
                     // #1: Update activeDate value
                     activeDate = newDate;
+                    // This will trigger onViewChanged event, which developer can listen to
+                    if (widget.onViewChanged != null) {
+                      widget.onViewChanged!(activeDate);
+                    }
                     // #2: if unschedule appointment has been placed on previous date, then move it back to bottom stacked position
                     if (unScheduleAppointment == null &&
                         widget.unScheduleAppointment != null) {
@@ -542,7 +547,6 @@ class _CfCalendarState extends State<CfCalendar> {
   void _updateCalendarAppointmentList(
     CalendarAppointment appointment,
     double dropOffset, {
-
     /// if this is true that means the dropped appointment is not already in appointmentsList
     bool isUnscheduleAppointment = false,
   }) {

@@ -127,7 +127,7 @@ class AppointmentView extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  jobInfo.unitAddress ?? '',
+                  jobInfo.property?.address.addressString ?? '',
                   style: bodyText3.copyWith(
                     fontWeight: FontWeight.w500,
                     color: textColor,

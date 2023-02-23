@@ -3,52 +3,6 @@ import 'package:casa_flutter_calendar/src/common/constants.dart';
 import 'package:casa_flutter_calendar/src/common/style.dart';
 import 'package:flutter/material.dart';
 
-// class Job {
-//   final String id;
-//   final AppUser createdBy;
-//   final DateTime createdAt;
-//   final CasaIssue issue;
-//   final String description;
-//   final double? jobWage;
-
-//   // enum
-//   final JobStatus status;
-//   final List<CasaAttachment> attachments;
-//   final String? voiceNote;
-//   // final String? unitAddress;
-
-//   // enum
-//   final JobType type;
-//   final int? jobDurationInHours;
-//   final bool residentWillResolveWorkHimSelf;
-
-//   // enum
-//   final UserRole? jobRequiredSkill;
-
-//   // availablity list of renter, freelancer need to choose time from this list
-//   final List<AvailabilityTime>? availabilityList;
-//   final Meeting? meetingActivity;
-//   final List<JobActivity> activities;
-
-//   ///
-//   final OnTheWay? lastOnTheWayActivity;
-
-//   /// this parameter will hold freelancer, renter, expert feedback
-//   final JobFeedback? feedback;
-
-//   /// this map will hold, assigned freelanceer and it's assinged date
-//   final AssignedTechnician? assignedTechnician;
-
-//   /// Property
-//   final Property property;
-
-//   /// Job Tool List
-//   final List<JobTool>? jobToolsList;
-
-//   /// Required Technician Level List...
-//   final List<String>? requiredTechnicianLevel;
-// }
-
 class AppointmentView extends StatelessWidget {
   final jobInfo;
   final double height;

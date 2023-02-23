@@ -1,12 +1,11 @@
 import 'package:casa_flutter_calendar/casa_flutter_calendar.dart';
-import 'package:example/enum/date_extension.dart';
+import 'package:example/model/address.dart';
 import 'package:example/model/job.dart';
-import 'package:example/utils/colors.dart';
+import 'package:example/model/property.dart';
 import 'package:flutter/material.dart';
-
 import 'enum/day_availability.dart';
+import 'model/assigned_technician.dart';
 import 'model/casa_time_of_day.dart';
-import 'views/appointment_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,7 +45,7 @@ class _CasaFlutterCalendarExampleState
   DateTime? availableEndTime;
   // selected job
   late var unscheduleJob = Job(
-    id: 'Ticket 900',
+    id: 'Job 900',
     description: 'Washing machine not starting',
     jobDurationInHours: 2,
     availabilityList: [
@@ -74,10 +73,12 @@ class _CasaFlutterCalendarExampleState
   // already scheduled job list
   final myScheduleJobsListProvider = [
     Job(
-      id: 'Ticket 786',
+      id: 'Job 786',
       description: 'Washing machine not starting',
       jobDurationInHours: 2,
-      startTime: DateTime(now.year, now.month, now.day + 1, 1),
+      // startTime: DateTime(now.year, now.month, now.day + 1, 1),
+      assignedTechnician: AssignedTechnician(
+          scheduleTime: DateTime(now.year, now.month, now.day, 1)),
       availabilityList: const [
         AvailabilityTime(
           days: ['Tue'],
@@ -92,14 +93,23 @@ class _CasaFlutterCalendarExampleState
           toTime: CasaTimeOfDay(hour: 12, minute: 0),
         ),
       ],
-      freelancerActivity: JobFreelancerActivity(
-          scheduleJobTime: DateTime(now.year, now.month, now.day + 1, 1)),
+      property: Property(
+        id: '1',
+        address: Address(
+          id: '1',
+          addressString: 'Streat 21, i 10 1, Islamabad',
+          cityName: 'Islamabad',
+          countryName: 'Pakistan',
+        ),
+      ),
     ),
     Job(
-      id: 'Ticket 800',
+      id: 'Job 800',
       description: 'Washing machine not starting',
-      jobDurationInHours: 3,
-      startTime: DateTime(now.year, now.month, now.day, 17),
+      jobDurationInHours: 2,
+      // startTime: DateTime(now.year, now.month, now.day, 17),
+      assignedTechnician: AssignedTechnician(
+          scheduleTime: DateTime(now.year, now.month, now.day + 1, 3)),
       availabilityList: const [
         AvailabilityTime(
           days: ['Tue'],
@@ -114,8 +124,17 @@ class _CasaFlutterCalendarExampleState
           toTime: CasaTimeOfDay(hour: 23, minute: 0),
         ),
       ],
-      freelancerActivity: JobFreelancerActivity(
-          scheduleJobTime: DateTime(now.year, now.month, now.day, 12)),
+      property: Property(
+        id: '1',
+        address: Address(
+          id: '1',
+          addressString: 'Streat 21, i 10 1, Islamabad',
+          cityName: 'Islamabad',
+          countryName: 'Pakistan',
+        ),
+      ),
+      // freelancerActivity: JobFreelancerActivity(
+      //     scheduleJobTime: DateTime(now.year, now.month, now.day, 12)),
     ),
   ];
 
@@ -144,24 +163,11 @@ class _CasaFlutterCalendarExampleState
         dataSource: MeetingDataSource(_getDataSource()),
         // unScheduleAppointment: unScheduleAppointment,
         activeDate: activeDate,
-        //   appointmentBuilder:
-        //       (context, appointment, selectedAppointment, key) {
-        //     Job job = appointment.data as Job;
-        //     debugPrint("selectedAppointment: ${selectedAppointment.id}");
-        //     debugPrint("appointment: ${appointment.id}");
-        //     bool isSelectedJob = selectedAppointment.id == appointment.id;
-        //     debugPrint("isSelectedJob: $isSelectedJob");
-        //     return AppointmentView(
-        //       key: key,
-        //       height:
-        //           isSelectedJob ? 80 : timeIntervalHeight * job.numberOfHours,
-        //       jobInfo: job,
-        //       color: isSelectedJob ? primaryColor : appBackgroundColor,
-        //       textColor: isSelectedJob ? Colors.white : blackAccent1,
-        //     );
-        //   },
-        // ),
-        // ],
+        onViewChanged: (date) {
+          debugPrint('onViewChanged');
+          debugPrint('date: $date');
+        },
+
         onAccept: (acceptedAppointment, scheduleDate) {
           debugPrint("onAccept");
         },
@@ -220,16 +226,16 @@ class MeetingDataSource extends CalendarDataSource {
 
   @override
   DateTime getStartTime(int index) {
-    return _getMeetingData(index).startTime ?? now;
+    return _getMeetingData(index).assignedTechnician?.scheduleTime ?? now;
   }
 
   @override
   DateTime getEndTime(int index) {
-    final date = _getMeetingData(index).startTime;
+    final date = _getMeetingData(index).assignedTechnician?.scheduleTime;
     if (date == null) {
       return now;
     } else {
-      final numOfHour = _getMeetingData(index).jobDurationInHours;
+      final numOfHour = _getMeetingData(index).jobDurationInHours!;
       return DateTime(date.year, date.month, date.day, date.hour + numOfHour);
     }
   }
